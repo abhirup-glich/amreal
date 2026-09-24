@@ -794,6 +794,7 @@ function Footer() {
           <Link to="/products">Products</Link>
           <Link to="/about">About</Link>
           <Link to="/feedback">Feedback</Link>
+          <Link to="/admin">Admin</Link>
         </div>
         <div>
           <span className="footer-title">Connect</span>
