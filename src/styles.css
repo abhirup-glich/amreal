@@ -203,23 +203,35 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  border-radius: 5px;
-  padding: 5px 8px;
+  background: transparent;
+  padding: 0;
   line-height: 0;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, .08);
+  box-shadow: none;
 }
 
 .brand-logo img {
   display: block;
-  width: 118px;
-  height: auto;
-  max-height: 58px;
+  width: auto;
+  height: 44px;
+  max-height: 48px;
   object-fit: contain;
+  transition: transform .2s ease;
 }
 
-.brand-logo-dark {
+.logo:hover .brand-logo img {
+  transform: scale(1.02);
+}
+
+.admin-sidebar-brand .brand-logo {
   background: #fff;
+  border-radius: 5px;
+  padding: 5px 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .15);
+}
+
+.admin-sidebar-brand .brand-logo img {
+  height: 38px;
+  width: auto;
 }
 
 .logo span {
@@ -1801,7 +1813,8 @@ th {
     display: block;
   }
   .brand-logo img {
-    width: 105px;
+    height: 38px;
+    width: auto;
   }
   .logo {
     font-size: 27px;
@@ -2030,6 +2043,10 @@ th {
   .announcement-dot {
     margin: 0 10px;
     font-size: 10px;
+  }
+  .brand-logo img {
+    height: 34px;
+    width: auto;
   }
   .hero {
     min-height: 580px;
