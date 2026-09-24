@@ -51,9 +51,27 @@ function BrandLogo({ dark = false }: { dark?: boolean }) {
 }
 
 function Announcement() {
+  const items = Array(12).fill("AMREAL PROFESSIONALS");
   return (
-    <div className="announcement">
-      PROFESSIONAL BEAUTY SUPPLY <span>•</span> SALON &amp; BUSINESS ENQUIRIES WELCOME
+    <div className="announcement" aria-label="AMREAL PROFESSIONALS">
+      <div className="announcement-track">
+        <div className="announcement-group">
+          {items.map((text, i) => (
+            <span key={i} className="announcement-item">
+              <span className="announcement-text">{text}</span>
+              <span className="announcement-dot" aria-hidden="true">•</span>
+            </span>
+          ))}
+        </div>
+        <div className="announcement-group" aria-hidden="true">
+          {items.map((text, i) => (
+            <span key={`dup-${i}`} className="announcement-item">
+              <span className="announcement-text">{text}</span>
+              <span className="announcement-dot">•</span>
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

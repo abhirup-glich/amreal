@@ -86,32 +86,75 @@ img {
 
 .announcement {
   min-height: 32px;
-  height: auto;
+  height: 32px;
   max-height: 40px;
   background: var(--cream);
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  letter-spacing: .18em;
-  font-weight: 700;
   position: relative;
   z-index: 30;
-  text-align: center;
-  padding: 6px 14px;
   max-width: 100%;
   overflow: hidden;
   box-sizing: border-box;
-  transition: max-height .25s ease, opacity .2s ease, padding .25s ease;
+  padding: 0;
+  transition: max-height .25s ease, opacity .2s ease;
+  user-select: none;
 }
 
 .site-header-scrolled .announcement {
   max-height: 0;
   min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+.announcement-track {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  will-change: transform;
+  animation: announcementLoop 28s linear infinite;
+}
+
+.announcement-track:hover {
+  animation-play-state: paused;
+}
+
+.announcement-group {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.announcement-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.announcement-text {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--charcoal);
+}
+
+.announcement-dot {
+  color: var(--gold);
+  margin: 0 16px;
+  font-size: 13px;
+  display: inline-block;
+  line-height: 1;
+}
+
+@keyframes announcementLoop {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .site-header-spacer {
@@ -1735,9 +1778,17 @@ th {
 /* Mobile & Tablet Portrait (max-width: 760px) */
 @media (max-width: 760px) {
   .announcement {
-    font-size: 8px;
-    letter-spacing: .08em;
-    padding: 6px 10px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0;
+  }
+  .announcement-text {
+    font-size: 9px;
+    letter-spacing: .15em;
+  }
+  .announcement-dot {
+    margin: 0 12px;
+    font-size: 11px;
   }
   .navbar {
     height: 68px;
@@ -1968,9 +2019,17 @@ th {
 /* Small Mobile (max-width: 480px) */
 @media (max-width: 480px) {
   .announcement {
-    font-size: 7.5px;
-    letter-spacing: .06em;
-    padding: 5px 8px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+  }
+  .announcement-text {
+    font-size: 8.5px;
+    letter-spacing: .12em;
+  }
+  .announcement-dot {
+    margin: 0 10px;
+    font-size: 10px;
   }
   .hero {
     min-height: 580px;
