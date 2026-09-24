@@ -62,8 +62,8 @@ function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const links = [
@@ -74,32 +74,38 @@ function Navbar() {
     ["Contact", "/contact"]
   ];
   return (
-    <header className={cx("navbar", scrolled && "navbar-scrolled")}>
-      <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
-      <nav className="desktop-nav">
-        {links.map(([label, to]) => (
-          <NavLink key={to} to={to} className={({ isActive }) => cx("nav-link", isActive && "active")}>{label}</NavLink>
-        ))}
-        <Link className="button button-small" to="/contact">Enquire Now <ArrowRight size={15} /></Link>
-      </nav>
-      <button className="mobile-menu-button" onClick={() => setOpen(true)} aria-label="Open menu"><Menu /></button>
-      <AnimatePresence>
-        {open && (
-          <motion.div className="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="mobile-menu-top">
-              <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
-              <button onClick={() => setOpen(false)}><X /></button>
-            </div>
-            <div className="mobile-links">
-              {links.map(([label, to]) => (
-                <Link key={to} to={to} onClick={() => setOpen(false)}>{label}<ArrowRight /></Link>
-              ))}
-              <Link className="button" to="/contact" onClick={() => setOpen(false)}>Enquire Now <ArrowRight size={16} /></Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+    <>
+      <div className={cx("site-header", scrolled && "site-header-scrolled")}>
+        <Announcement />
+        <header className={cx("navbar", scrolled && "navbar-scrolled")}>
+          <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
+          <nav className="desktop-nav">
+            {links.map(([label, to]) => (
+              <NavLink key={to} to={to} className={({ isActive }) => cx("nav-link", isActive && "active")}>{label}</NavLink>
+            ))}
+            <Link className="button button-small" to="/contact">Enquire Now <ArrowRight size={15} /></Link>
+          </nav>
+          <button className="mobile-menu-button" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
+          <AnimatePresence>
+            {open && (
+              <motion.div className="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div className="mobile-menu-top">
+                  <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
+                  <button onClick={() => setOpen(false)} aria-label="Close menu"><X size={20} /></button>
+                </div>
+                <div className="mobile-links">
+                  {links.map(([label, to]) => (
+                    <Link key={to} to={to} onClick={() => setOpen(false)}>{label}<ArrowRight /></Link>
+                  ))}
+                  <Link className="button" to="/contact" onClick={() => setOpen(false)}>Enquire Now <ArrowRight size={16} /></Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </header>
+      </div>
+      <div className="site-header-spacer" aria-hidden="true" />
+    </>
   );
 }
 
@@ -345,161 +351,164 @@ function Home() {
   }, []);
 
   return (
-    <main>
-      <Announcement /><Navbar /><Hero /><Marquee />
-      <Reveal>
-        <section className="intro section">
-          <div>
-            <span className="eyebrow">AMREAL PROFESSIONAL</span>
-            <h2>MORE THAN<br /><em>BEAUTY.</em></h2>
-          </div>
-          <div className="intro-copy">
-            <p>AMREAL Professional brings together professional beauty solutions, thoughtful product discovery and an experience created for modern beauty professionals.</p>
-            <Button to="/about">Discover AMREAL</Button>
+    <>
+      <Navbar />
+      <main>
+        <Hero /><Marquee />
+        <Reveal>
+          <section className="intro section">
+            <div>
+              <span className="eyebrow">AMREAL PROFESSIONAL</span>
+              <h2>MORE THAN<br /><em>BEAUTY.</em></h2>
+            </div>
+            <div className="intro-copy">
+              <p>AMREAL Professional brings together professional beauty solutions, thoughtful product discovery and an experience created for modern beauty professionals.</p>
+              <Button to="/about">Discover AMREAL</Button>
+            </div>
+          </section>
+        </Reveal>
+
+        <section className="benefits"><div className="benefits-inner">
+          {["Professional Formulas", "Salon Ready", "Quality Focused", "Beauty Professionals", "Business Supply"].map((x, i) => (
+            <div className="benefit" key={x}>
+              <span>0{i + 1}</span>
+              <h3>{x}</h3>
+              <p>Designed around professional beauty needs.</p>
+            </div>
+          ))}
+        </div></section>
+
+        <section className="section cream">
+          <SectionHeading eyebrow="THE COLLECTION" title="EXPLORE THE AMREAL COLLECTION" text="Professional beauty categories designed for discovery." />
+          <div className="category-grid">
+            {staticCategories.map(c => (
+              <Link to={`/products?category=${encodeURIComponent(c.name)}`} className="category-card" key={c.name}>
+                <img src={c.image} alt={c.name} loading="lazy" />
+                <div>
+                  <span>{c.name}</span>
+                  <p>{c.description}</p>
+                  <ArrowRight />
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
-      </Reveal>
 
-      <section className="benefits"><div className="benefits-inner">
-        {["Professional Formulas", "Salon Ready", "Quality Focused", "Beauty Professionals", "Business Supply"].map((x, i) => (
-          <div className="benefit" key={x}>
-            <span>0{i + 1}</span>
-            <h3>{x}</h3>
-            <p>Designed around professional beauty needs.</p>
+        <section className="section">
+          <SectionHeading eyebrow="DISCOVER AMREAL" title="PROFESSIONAL SOLUTIONS" text="Explore the current product list supplied for the AMREAL collection." />
+          {loading ? (
+            <div className="loading-state"><Loader className="spin" size={28} /><p>Loading products…</p></div>
+          ) : products.length ? (
+            <div className="product-grid">{products.map(p => <ProductCard key={p.id} product={p} />)}</div>
+          ) : (
+            <div className="empty-state"><p>No featured products yet. Add some in the admin panel.</p></div>
+          )}
+          <div className="center-button"><Button to="/products">View All Products</Button></div>
+        </section>
+
+        <section className="editorial">
+          <div className="editorial-image" style={{ backgroundImage: `url(${heroSlides[2].image})` }} />
+          <div className="editorial-copy">
+            <span className="eyebrow">HAIR RITUAL</span>
+            <h2>MORE THAN<br /><em>CARE.</em></h2>
+            <p>Professional beauty routines deserve a premium product experience. Explore formats, categories and business-ready solutions.</p>
+            <Button to="/products">Discover Products</Button>
           </div>
-        ))}
-      </div></section>
+        </section>
 
-      <section className="section cream">
-        <SectionHeading eyebrow="THE COLLECTION" title="EXPLORE THE AMREAL COLLECTION" text="Professional beauty categories designed for discovery." />
-        <div className="category-grid">
-          {staticCategories.map(c => (
-            <Link to={`/products?category=${encodeURIComponent(c.name)}`} className="category-card" key={c.name}>
-              <img src={c.image} alt={c.name} loading="lazy" />
-              <div>
-                <span>{c.name}</span>
-                <p>{c.description}</p>
+        <section className="section blush">
+          <SectionHeading eyebrow="DISCOVER YOUR ROUTINE" title="SHOP BY HAIR TYPE" text="Find the professional solution for your hair." />
+          <div className="hair-grid">
+            {hairTypes.map(h => (
+              <Link key={h.name} to={`/products?hairType=${h.name.toLowerCase()}`} className="hair-card">
+                <img src={h.image} alt={h.name} />
+                <div>
+                  <span>{h.name}</span>
+                  <p>{h.text}</p>
+                  <b>Explore <ArrowRight size={14} /></b>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Before/After Section - after hair type */}
+        {baItems.length > 0 && <BeforeAfterSection items={baItems} />}
+
+        <section className="section concern-section">
+          <SectionHeading eyebrow="PRODUCT DISCOVERY" title="FIND YOUR PROFESSIONAL SOLUTION" />
+          <div className="concern-list">
+            {concerns.map(c => (
+              <Link key={c} to={`/products?concern=${encodeURIComponent(c)}`}>{c}<ArrowRight size={16} /></Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="ingredients section cream">
+          <div>
+            <span className="eyebrow">FORMULATION STORY</span>
+            <h2>BEAUTY MEETS<br /><em>FORMULATION.</em></h2>
+            <p>Only verified formulation information should be published. The demo therefore keeps ingredient claims intentionally conservative until AMREAL supplies approved details.</p>
+          </div>
+          <div className="ingredient-stack">
+            {["ARGAN OIL", "PRO-VITAMIN B5", "COLLAGEN PLEX"].map((x, i) => (
+              <div key={x}>
+                <span>0{i + 1}</span>
+                <h3>{x}</h3>
+                <p>Approved product information to be supplied by AMREAL.</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="full-editorial">
+          <div className="full-overlay">
+            <span className="eyebrow">AMREAL PROFESSIONAL</span>
+            <h2>SCIENCE FOR<br /><em>BEAUTIFUL HAIR.</em></h2>
+            <Button to="/contact">Start a Conversation</Button>
+          </div>
+        </section>
+
+        <section className="business section">
+          <SectionHeading eyebrow="FOR PROFESSIONALS" title="CREATED FOR PROFESSIONALS." text="Built around the needs of modern beauty businesses." />
+          <div className="business-grid">
+            {["SALONS", "BEAUTY PROFESSIONALS", "SPAS", "RETAILERS", "DISTRIBUTORS"].map((x, i) => (
+              <div className="business-card" key={x}>
+                <span>0{i + 1}</span>
+                <h3>{x}</h3>
                 <ArrowRight />
               </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="section">
-        <SectionHeading eyebrow="DISCOVER AMREAL" title="PROFESSIONAL SOLUTIONS" text="Explore the current product list supplied for the AMREAL collection." />
-        {loading ? (
-          <div className="loading-state"><Loader className="spin" size={28} /><p>Loading products…</p></div>
-        ) : products.length ? (
-          <div className="product-grid">{products.map(p => <ProductCard key={p.id} product={p} />)}</div>
-        ) : (
-          <div className="empty-state"><p>No featured products yet. Add some in the admin panel.</p></div>
-        )}
-        <div className="center-button"><Button to="/products">View All Products</Button></div>
-      </section>
-
-      <section className="editorial">
-        <div className="editorial-image" style={{ backgroundImage: `url(${heroSlides[2].image})` }} />
-        <div className="editorial-copy">
-          <span className="eyebrow">HAIR RITUAL</span>
-          <h2>MORE THAN<br /><em>CARE.</em></h2>
-          <p>Professional beauty routines deserve a premium product experience. Explore formats, categories and business-ready solutions.</p>
-          <Button to="/products">Discover Products</Button>
-        </div>
-      </section>
-
-      <section className="section blush">
-        <SectionHeading eyebrow="DISCOVER YOUR ROUTINE" title="SHOP BY HAIR TYPE" text="Find the professional solution for your hair." />
-        <div className="hair-grid">
-          {hairTypes.map(h => (
-            <Link key={h.name} to={`/products?hairType=${h.name.toLowerCase()}`} className="hair-card">
-              <img src={h.image} alt={h.name} />
-              <div>
-                <span>{h.name}</span>
-                <p>{h.text}</p>
-                <b>Explore <ArrowRight size={14} /></b>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Before/After Section - after hair type */}
-      {baItems.length > 0 && <BeforeAfterSection items={baItems} />}
-
-      <section className="section concern-section">
-        <SectionHeading eyebrow="PRODUCT DISCOVERY" title="FIND YOUR PROFESSIONAL SOLUTION" />
-        <div className="concern-list">
-          {concerns.map(c => (
-            <Link key={c} to={`/products?concern=${encodeURIComponent(c)}`}>{c}<ArrowRight size={16} /></Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="ingredients section cream">
-        <div>
-          <span className="eyebrow">FORMULATION STORY</span>
-          <h2>BEAUTY MEETS<br /><em>FORMULATION.</em></h2>
-          <p>Only verified formulation information should be published. The demo therefore keeps ingredient claims intentionally conservative until AMREAL supplies approved details.</p>
-        </div>
-        <div className="ingredient-stack">
-          {["ARGAN OIL", "PRO-VITAMIN B5", "COLLAGEN PLEX"].map((x, i) => (
-            <div key={x}>
-              <span>0{i + 1}</span>
-              <h3>{x}</h3>
-              <p>Approved product information to be supplied by AMREAL.</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="full-editorial">
-        <div className="full-overlay">
-          <span className="eyebrow">AMREAL PROFESSIONAL</span>
-          <h2>SCIENCE FOR<br /><em>BEAUTIFUL HAIR.</em></h2>
-          <Button to="/contact">Start a Conversation</Button>
-        </div>
-      </section>
-
-      <section className="business section">
-        <SectionHeading eyebrow="FOR PROFESSIONALS" title="CREATED FOR PROFESSIONALS." text="Built around the needs of modern beauty businesses." />
-        <div className="business-grid">
-          {["SALONS", "BEAUTY PROFESSIONALS", "SPAS", "RETAILERS", "DISTRIBUTORS"].map((x, i) => (
-            <div className="business-card" key={x}>
-              <span>0{i + 1}</span>
-              <h3>{x}</h3>
-              <ArrowRight />
-            </div>
-          ))}
-        </div>
-        <div className="center-button"><Button>Become an AMREAL Partner</Button></div>
-      </section>
-
-      <section className="social section blush">
-        <SectionHeading eyebrow="SOCIAL" title="FOLLOW THE AMREAL JOURNEY" text="Explore AMREAL professional treatments and results." />
-        <div className="social-grid">
-          {["collagen-biotin-masque.jpeg", "coffee-scalp-scrub.jpeg", "hair-ritual.jpeg", "scalp-detox.jpeg", "anti-hairfall-serum.jpeg", "collagen-biotin-masque.jpeg"].map((file, i) => (
-            <a href="#" onClick={e => e.preventDefault()} key={`${file}-${i}`} className="social-card">
-              <img src={`/assets/${file}`} alt="AMREAL Professional" />
-              <span><Instagram size={18} /> View Post</span>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="final-cta">
-        <div>
-          <span className="eyebrow">AMREAL PROFESSIONAL</span>
-          <h2>LET'S CREATE BEAUTIFUL RESULTS <em>TOGETHER.</em></h2>
-          <p>Looking for professional beauty products for your business?</p>
-          <div className="hero-actions">
-            <Button>Send an Enquiry</Button>
-            <Button to="/products" secondary>Explore Products</Button>
+            ))}
           </div>
-        </div>
-      </section>
+          <div className="center-button"><Button>Become an AMREAL Partner</Button></div>
+        </section>
+
+        <section className="social section blush">
+          <SectionHeading eyebrow="SOCIAL" title="FOLLOW THE AMREAL JOURNEY" text="Explore AMREAL professional treatments and results." />
+          <div className="social-grid">
+            {["collagen-biotin-masque.jpeg", "coffee-scalp-scrub.jpeg", "hair-ritual.jpeg", "scalp-detox.jpeg", "anti-hairfall-serum.jpeg", "collagen-biotin-masque.jpeg"].map((file, i) => (
+              <a href="#" onClick={e => e.preventDefault()} key={`${file}-${i}`} className="social-card">
+                <img src={`/assets/${file}`} alt="AMREAL Professional" />
+                <span><Instagram size={18} /> View Post</span>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section className="final-cta">
+          <div>
+            <span className="eyebrow">AMREAL PROFESSIONAL</span>
+            <h2>LET'S CREATE BEAUTIFUL RESULTS <em>TOGETHER.</em></h2>
+            <p>Looking for professional beauty products for your business?</p>
+            <div className="hero-actions">
+              <Button>Send an Enquiry</Button>
+              <Button to="/products" secondary>Explore Products</Button>
+            </div>
+          </div>
+        </section>
+      </main>
       <Footer />
-    </main>
+    </>
   );
 }
 
@@ -537,7 +546,7 @@ function ProductsPage() {
 
   return (
     <>
-      <Announcement /><Navbar />
+      <Navbar />
       <main className="catalogue">
         <section className="catalogue-hero">
           <span className="eyebrow">AMREAL PROFESSIONAL</span>
@@ -605,14 +614,14 @@ function ProductDetail() {
     load();
   }, [slug]);
 
-  if (loading) return <><Announcement /><Navbar /><div className="loading-state full"><Loader className="spin" size={36} /></div></>;
+  if (loading) return <><Navbar /><div className="loading-state full"><Loader className="spin" size={36} /></div></>;
   if (!product) return <NotFound />;
 
   const related = allProducts.filter(p => p.id !== product.id).slice(0, 4);
 
   return (
     <>
-      <Announcement /><Navbar />
+      <Navbar />
       <main className="detail">
         <div className="detail-gallery">
           <div className="detail-main"><img src={product.gallery[active]} alt={product.name} /></div>
@@ -655,10 +664,10 @@ function Contact() {
   const [params] = useSearchParams();
   const [sent, setSent] = useState(false);
   const product = params.get("product") || "";
-  if (sent) return <><Announcement /><Navbar /><Success title="THANK YOU FOR YOUR ENQUIRY." text="Your enquiry has been captured in this demo. Connect the form to the AMREAL backend/API for production use." /><Footer /></>;
+  if (sent) return <><Navbar /><Success title="THANK YOU FOR YOUR ENQUIRY." text="Your enquiry has been captured in this demo. Connect the form to the AMREAL backend/API for production use." /><Footer /></>;
   return (
     <>
-      <Announcement /><Navbar />
+      <Navbar />
       <main className="form-page">
         <div className="form-intro">
           <span className="eyebrow">CONTACT AMREAL</span>
@@ -698,10 +707,10 @@ function Feedback() {
   useEffect(() => {
     loadProductsData().then(prods => setAllProducts(prods.map(dbToProduct)));
   }, []);
-  if (sent) return <><Announcement /><Navbar /><Success title="THANK YOU FOR SHARING." text="Your feedback helps improve the AMREAL experience." /><Footer /></>;
+  if (sent) return <><Navbar /><Success title="THANK YOU FOR SHARING." text="Your feedback helps improve the AMREAL experience." /><Footer /></>;
   return (
     <>
-      <Announcement /><Navbar />
+      <Navbar />
       <main className="form-page single">
         <div className="form-intro">
           <span className="eyebrow">YOUR EXPERIENCE MATTERS</span>
@@ -730,7 +739,7 @@ function Feedback() {
 function About() {
   return (
     <>
-      <Announcement /><Navbar />
+      <Navbar />
       <main>
         <section className="about-hero">
           <span className="eyebrow">ABOUT AMREAL</span>
@@ -769,7 +778,7 @@ function Success({ title, text }: { title: string; text: string }) {
 function NotFound() {
   return (
     <>
-      <Announcement /><Navbar />
+      <Navbar />
       <section className="success">
         <span className="eyebrow">404</span>
         <h1>THIS PAGE HAS <em>MOVED.</em></h1>
