@@ -12,6 +12,7 @@ import { categories as staticCategories, concerns, hairTypes, heroSlides } from 
 import {
   DBProduct,
   DBBeforeAfter,
+  defaultBeforeAfterItems,
   processDirectImageFile,
   loadProductsData,
   saveProductData,
@@ -69,7 +70,6 @@ function Navbar() {
     ["Home", "/"],
     ["Products", "/products"],
     ["About", "/about"],
-    ["Results", "/#results"],
     ["Feedback", "/feedback"],
     ["Contact", "/contact"]
   ];
@@ -326,7 +326,7 @@ function ProductCard({ product }: { product: Product }) {
 
 function Home() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [baItems, setBaItems] = useState<DBBeforeAfter[]>([]);
+  const [baItems, setBaItems] = useState<DBBeforeAfter[]>(defaultBeforeAfterItems);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
