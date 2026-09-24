@@ -56,6 +56,21 @@ CREATE POLICY "Admin full access before_after"
   USING (true)
   WITH CHECK (true);
 
+-- ─── Storage Bucket for Direct Image Uploads ─────────────────────────────────
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('images', 'images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Public can view images
+CREATE POLICY "Public image access"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'images');
+
+-- Public / Admin can upload images
+CREATE POLICY "Public image upload"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'images');
+
 -- ─── Sample seed data (optional) ─────────────────────────────────────────────
 
 INSERT INTO public.products (name, slug, size, category, description, image_url, gallery_urls, hair_types, concerns, ingredients, benefits, suitable_for, featured)

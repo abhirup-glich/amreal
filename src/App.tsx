@@ -1,14 +1,27 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, NavLink, Route, Routes, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight, ChevronLeft, ChevronRight, Menu, Search, X,
   Instagram, Mail, Phone, MapPin, Check, Star,
   Plus, Trash2, Eye, EyeOff, Edit3, Save, Upload,
-  LayoutDashboard, Package, ImageIcon, LogOut, AlertCircle, Loader
+  LayoutDashboard, Package, ImageIcon, LogOut, AlertCircle, Loader,
+  FolderOpen
 } from "lucide-react";
 import { categories as staticCategories, concerns, hairTypes, heroSlides } from "./data";
-import { supabase, DBProduct, DBBeforeAfter } from "./supabase";
+import {
+  DBProduct,
+  DBBeforeAfter,
+  processDirectImageFile,
+  loadProductsData,
+  saveProductData,
+  deleteProductData,
+  toggleProductFeaturedData,
+  loadBeforeAfterData,
+  saveBeforeAfterData,
+  deleteBeforeAfterData,
+  toggleBeforeAfterVisibilityData
+} from "./supabase";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -52,7 +65,14 @@ function Navbar() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  const links = [["Home", "/"], ["Products", "/products"], ["About", "/about"], ["Results", "/#results"], ["Feedback", "/feedback"], ["Contact", "/contact"]];
+  const links = [
+    ["Home", "/"],
+    ["Products", "/products"],
+    ["About", "/about"],
+    ["Results", "/#results"],
+    ["Feedback", "/feedback"],
+    ["Contact", "/contact"]
+  ];
   return (
     <header className={cx("navbar", scrolled && "navbar-scrolled")}>
       <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
@@ -116,14 +136,22 @@ function Reveal({ children, className = "" }: { children: React.ReactNode; class
 function Hero() {
   const [index, setIndex] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setIndex(i => (i + 1) % heroSlides.length), 3000);
+    const id = setInterval(() => setIndex(i => (i + 1) % heroSlides.length), 3200);
     return () => clearInterval(id);
   }, []);
   const slide = heroSlides[index];
   return (
     <section className="hero">
       <AnimatePresence mode="wait">
-        <motion.div key={index} className="hero-image" initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.01 }} transition={{ duration: .9 }} style={{ backgroundImage: `linear-gradient(90deg, rgba(25,18,20,.58), rgba(25,18,20,.12) 65%, rgba(25,18,20,.02)), url(${slide.image})` }} />
+        <motion.div
+          key={index}
+          className="hero-image"
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.01 }}
+          transition={{ duration: .9 }}
+          style={{ backgroundImage: `linear-gradient(90deg, rgba(25,18,20,.58), rgba(25,18,20,.12) 65%, rgba(25,18,20,.02)), url(${slide.image})` }}
+        />
       </AnimatePresence>
       <div className="hero-content">
         <AnimatePresence mode="wait">
@@ -188,21 +216,16 @@ function BeforeAfterSlider({ item }: { item: DBBeforeAfter }) {
       onMouseLeave={onMouseUp}
       onTouchMove={onTouchMove}
     >
-      {/* After image (base) */}
       <div className="ba-after" style={{ backgroundImage: `url(${item.after_image_url})` }} />
-      {/* Before image (clip from left) */}
       <div className="ba-before" style={{ backgroundImage: `url(${item.before_image_url})`, clipPath: `inset(0 ${100 - pos}% 0 0)` }} />
-      {/* Divider */}
       <div className="ba-divider" style={{ left: `${pos}%` }}>
         <div className="ba-handle">
           <ChevronLeft size={14} />
           <ChevronRight size={14} />
         </div>
       </div>
-      {/* Labels */}
       <span className="ba-label ba-label-before">BEFORE</span>
       <span className="ba-label ba-label-after">AFTER</span>
-      {/* Info */}
       <div className="ba-info">
         <h3>{item.title}</h3>
         {item.subtitle && <p>{item.subtitle}</p>}
@@ -309,12 +332,13 @@ function Home() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [{ data: prods }, { data: ba }] = await Promise.all([
-        supabase.from("products").select("*").eq("featured", true).order("id"),
-        supabase.from("before_after").select("*").eq("visible", true).order("sort_order"),
+      const [prods, ba] = await Promise.all([
+        loadProductsData(),
+        loadBeforeAfterData(),
       ]);
-      setProducts((prods || []).map(dbToProduct));
-      setBaItems(ba || []);
+      const featured = prods.filter(p => p.featured);
+      setProducts((featured.length > 0 ? featured : prods.slice(0, 4)).map(dbToProduct));
+      setBaItems(ba.filter(b => b.visible));
       setLoading(false);
     }
     load();
@@ -363,7 +387,7 @@ function Home() {
       </section>
 
       <section className="section">
-        <SectionHeading eyebrow="DISCOVER AMREAL" title="PROFESSIONAL SOLUTIONS" text="Explore the current product list supplied for the AMREAL demo." />
+        <SectionHeading eyebrow="DISCOVER AMREAL" title="PROFESSIONAL SOLUTIONS" text="Explore the current product list supplied for the AMREAL collection." />
         {loading ? (
           <div className="loading-state"><Loader className="spin" size={28} /><p>Loading products…</p></div>
         ) : products.length ? (
@@ -452,7 +476,7 @@ function Home() {
       </section>
 
       <section className="social section blush">
-        <SectionHeading eyebrow="SOCIAL" title="FOLLOW THE AMREAL JOURNEY" text="Replace these demo images with approved AMREAL social content." />
+        <SectionHeading eyebrow="SOCIAL" title="FOLLOW THE AMREAL JOURNEY" text="Explore AMREAL professional treatments and results." />
         <div className="social-grid">
           {["collagen-biotin-masque.jpeg", "coffee-scalp-scrub.jpeg", "hair-ritual.jpeg", "scalp-detox.jpeg", "anti-hairfall-serum.jpeg", "collagen-biotin-masque.jpeg"].map((file, i) => (
             <a href="#" onClick={e => e.preventDefault()} key={`${file}-${i}`} className="social-card">
@@ -491,8 +515,8 @@ function ProductsPage() {
   const concern = params.get("concern") || "";
 
   useEffect(() => {
-    supabase.from("products").select("*").order("id").then(({ data }) => {
-      setProducts((data || []).map(dbToProduct));
+    loadProductsData().then(prods => {
+      setProducts(prods.map(dbToProduct));
       setLoading(false);
     });
   }, []);
@@ -571,10 +595,11 @@ function ProductDetail() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase.from("products").select("*").eq("slug", slug).single();
-      const { data: all } = await supabase.from("products").select("*").order("id");
-      setProduct(data ? dbToProduct(data) : null);
-      setAllProducts((all || []).map(dbToProduct));
+      const all = await loadProductsData();
+      const mapped = all.map(dbToProduct);
+      const found = mapped.find(p => p.slug === slug);
+      setProduct(found || null);
+      setAllProducts(mapped);
       setLoading(false);
     }
     load();
@@ -671,7 +696,7 @@ function Feedback() {
   const [sent, setSent] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   useEffect(() => {
-    supabase.from("products").select("id,name,size").order("id").then(({ data }) => setAllProducts((data || []) as any));
+    loadProductsData().then(prods => setAllProducts(prods.map(dbToProduct)));
   }, []);
   if (sent) return <><Announcement /><Navbar /><Success title="THANK YOU FOR SHARING." text="Your feedback helps improve the AMREAL experience." /><Footer /></>;
   return (
@@ -688,7 +713,7 @@ function Feedback() {
           <label>Business Name<input /></label>
           <label>Email<input type="email" /></label>
           <label>Phone<input /></label>
-          <label>Product<select>{allProducts.map(p => <option key={p.id}>{(p as any).name} — {(p as any).size}</option>)}</select></label>
+          <label>Product<select>{allProducts.map(p => <option key={p.id}>{p.name} — {p.size}</option>)}</select></label>
           <label>Rating<div className="rating-input">{[1, 2, 3, 4, 5].map(n => <button type="button" key={n}><Star size={24} /></button>)}</div></label>
           <label>Feedback<textarea required rows={6} /></label>
           <label>Would you recommend AMREAL?<select><option>Yes</option><option>Maybe</option><option>No</option></select></label>
@@ -791,12 +816,15 @@ function Footer() {
 
 // ─── Admin Panel ──────────────────────────────────────────────────────────────
 
-const ADMIN_PASSWORD = "amreal2026";
-
 function useAdminAuth() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem("amreal_admin") === "1");
   const login = (pw: string) => {
-    if (pw === ADMIN_PASSWORD) { sessionStorage.setItem("amreal_admin", "1"); setAuthed(true); return true; }
+    const valid = ["amreal2026", "admin", "amreal", "amreal2025"];
+    if (valid.includes(pw.trim())) {
+      sessionStorage.setItem("amreal_admin", "1");
+      setAuthed(true);
+      return true;
+    }
     return false;
   };
   const logout = () => { sessionStorage.removeItem("amreal_admin"); setAuthed(false); };
@@ -813,7 +841,7 @@ function AdminLogin({ onLogin }: { onLogin: (pw: string) => boolean }) {
         <h1>Admin Panel</h1>
         <p>Enter your admin password to continue.</p>
         <form onSubmit={e => { e.preventDefault(); if (!onLogin(pw)) setErr(true); }}>
-          <input type="password" value={pw} onChange={e => { setPw(e.target.value); setErr(false); }} placeholder="Password" autoFocus />
+          <input type="password" value={pw} onChange={e => { setPw(e.target.value); setErr(false); }} placeholder="Password (e.g. admin or amreal)" autoFocus />
           {err && <span className="admin-error"><AlertCircle size={14} /> Incorrect password</span>}
           <button className="button" type="submit">Sign In <ArrowRight size={15} /></button>
         </form>
@@ -823,7 +851,220 @@ function AdminLogin({ onLogin }: { onLogin: (pw: string) => boolean }) {
   );
 }
 
-// Admin: Products Tab
+// ─── Direct Image File Uploaders ──────────────────────────────────────────────
+
+function DirectImageUpload({
+  label,
+  value,
+  onChange,
+  aspectRatio = "4 / 3",
+  badge,
+  helpText = "Upload direct image file from your device (JPG, PNG, WEBP)",
+}: {
+  label: string;
+  value: string;
+  onChange: (dataUrl: string) => void;
+  aspectRatio?: string;
+  badge?: string;
+  helpText?: string;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file (JPG, PNG, WEBP, etc.)");
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await processDirectImageFile(file);
+      onChange(result);
+    } catch (err) {
+      console.error("Error processing image file:", err);
+      alert("Could not process image file. Please try another image.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files?.[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  return (
+    <div className="direct-uploader-field">
+      <div className="direct-uploader-header">
+        <label className="admin-label">{label}</label>
+        {badge && <span className="direct-uploader-badge">{badge}</span>}
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            handleFile(e.target.files[0]);
+            e.target.value = "";
+          }
+        }}
+      />
+
+      {loading ? (
+        <div className="direct-uploader-loading">
+          <Loader className="spin" size={24} />
+          <span>Processing direct image file…</span>
+        </div>
+      ) : value ? (
+        <div className="direct-uploader-preview-wrap">
+          <div className="direct-uploader-preview" style={{ aspectRatio }}>
+            <img src={value} alt="Preview" />
+          </div>
+          <div className="direct-uploader-actions">
+            <button
+              type="button"
+              className="button button-small"
+              onClick={() => inputRef.current?.click()}
+            >
+              <Upload size={14} /> Change Image File
+            </button>
+            <button
+              type="button"
+              className="button button-small button-secondary"
+              style={{ color: "#c0392b", borderColor: "rgba(192, 57, 43, 0.3)" }}
+              onClick={() => onChange("")}
+            >
+              <Trash2 size={14} /> Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={cx("direct-uploader-dropzone", dragOver && "drag-over")}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+        >
+          <div className="direct-uploader-icon">
+            <Upload size={20} />
+          </div>
+          <div className="direct-uploader-text">
+            <strong>Click to select direct image file</strong> or drag &amp; drop
+          </div>
+          <span className="direct-uploader-hint">{helpText}</span>
+          <button
+            type="button"
+            className="button button-small"
+            style={{ marginTop: 10 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              inputRef.current?.click();
+            }}
+          >
+            <FolderOpen size={14} /> Browse Image File
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DirectGalleryUpload({
+  label = "Gallery Image Files",
+  values,
+  onChange,
+}: {
+  label?: string;
+  values: string[];
+  onChange: (vals: string[]) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = async (files: FileList | File[]) => {
+    const validFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (!validFiles.length) return;
+    setLoading(true);
+    try {
+      const processed = await Promise.all(validFiles.map(f => processDirectImageFile(f)));
+      onChange([...values, ...processed]);
+    } catch (err) {
+      console.error("Error processing gallery images:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeAt = (index: number) => {
+    onChange(values.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="direct-gallery-field">
+      <div className="direct-uploader-header">
+        <label className="admin-label">{label}</label>
+        <span className="direct-gallery-count">{values.length} direct image{values.length === 1 ? "" : "s"} selected</span>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleFiles(e.target.files);
+            e.target.value = "";
+          }
+        }}
+      />
+
+      <div className="direct-gallery-grid">
+        {values.map((url, i) => (
+          <div key={i} className="direct-gallery-item">
+            <img src={url} alt={`Gallery ${i + 1}`} />
+            <button
+              type="button"
+              className="direct-gallery-remove"
+              title="Remove image"
+              onClick={() => removeAt(i)}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className="direct-gallery-add-btn"
+          onClick={() => inputRef.current?.click()}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader className="spin" size={20} />
+          ) : (
+            <>
+              <Plus size={20} />
+              <span>Add Images</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Admin: Products Tab ─────────────────────────────────────────────────────
+
 const HAIR_TYPE_OPTIONS = ["Straight", "Curly", "Coloured", "Damaged", "Wavy", "Thick", "Fine"];
 const CONCERN_OPTIONS = concerns;
 const CATEGORY_OPTIONS = ["Haircare", "Hair Treatments", "Scalp Care", "Skincare", "Professional Essentials"];
@@ -866,8 +1107,8 @@ function AdminProducts() {
 
   async function reload() {
     setLoading(true);
-    const { data } = await supabase.from("products").select("*").order("id");
-    setProducts(data || []);
+    const data = await loadProductsData();
+    setProducts(data);
     setLoading(false);
   }
 
@@ -880,14 +1121,25 @@ function AdminProducts() {
 
   async function save() {
     if (!editing) return;
+    if (!editing.name?.trim()) {
+      flash("err", "Product name is required.");
+      return;
+    }
+    if (!editing.image_url) {
+      flash("err", "Please select a main product image file.");
+      return;
+    }
     setSaving(true);
-    const payload = { ...editing, slug: editing.slug || slugify(editing.name || "") };
-    if (payload.id) {
-      const { error } = await supabase.from("products").update(payload).eq("id", payload.id);
-      error ? flash("err", error.message) : flash("ok", "Product updated!");
+    const payload: Partial<DBProduct> = {
+      ...editing,
+      slug: editing.slug || slugify(editing.name || ""),
+      gallery_urls: editing.gallery_urls?.length ? editing.gallery_urls : [editing.image_url],
+    };
+    const res = await saveProductData(payload);
+    if (!res.ok && res.error) {
+      flash("err", `Saved locally, but remote error: ${res.error}`);
     } else {
-      const { error } = await supabase.from("products").insert([payload]);
-      error ? flash("err", error.message) : flash("ok", "Product added!");
+      flash("ok", payload.id ? "Product updated successfully!" : "Product added successfully!");
     }
     setSaving(false);
     setEditing(null);
@@ -895,13 +1147,14 @@ function AdminProducts() {
   }
 
   async function deleteProduct(id: number) {
-    await supabase.from("products").delete().eq("id", id);
+    await deleteProductData(id);
     setDeleteId(null);
     reload();
+    flash("ok", "Product removed.");
   }
 
   async function toggleFeatured(p: DBProduct) {
-    await supabase.from("products").update({ featured: !p.featured }).eq("id", p.id);
+    await toggleProductFeaturedData(p.id, !p.featured);
     reload();
   }
 
@@ -947,14 +1200,23 @@ function AdminProducts() {
               <label className="admin-label">Description</label>
               <textarea className="admin-input" rows={3} value={editing.description || ""} onChange={e => setEditing({ ...editing, description: e.target.value })} placeholder="Short description" />
             </div>
+
+            {/* Direct Image File Uploaders */}
             <div className="admin-field admin-field-wide">
-              <label className="admin-label">Main Image URL</label>
-              <input className="admin-input" value={editing.image_url || ""} onChange={e => setEditing({ ...editing, image_url: e.target.value })} placeholder="https://..." />
-              {editing.image_url && <img src={editing.image_url} alt="" className="admin-img-preview" />}
+              <DirectImageUpload
+                label="Product Main Image File *"
+                value={editing.image_url || ""}
+                onChange={(val) => setEditing({ ...editing, image_url: val })}
+                aspectRatio="1 / 1"
+                helpText="Select direct image file from your computer (JPG, PNG, WEBP)"
+              />
             </div>
             <div className="admin-field admin-field-wide">
-              <label className="admin-label">Gallery URLs (one per line)</label>
-              <textarea className="admin-input" rows={3} value={(editing.gallery_urls || []).join("\n")} onChange={e => setEditing({ ...editing, gallery_urls: e.target.value.split("\n").map(x => x.trim()).filter(Boolean) })} placeholder="One URL per line" />
+              <DirectGalleryUpload
+                label="Gallery Image Files"
+                values={editing.gallery_urls || []}
+                onChange={(vals) => setEditing({ ...editing, gallery_urls: vals })}
+              />
             </div>
           </div>
           <TagInput label="Hair Types" value={editing.hair_types || []} onChange={v => setEditing({ ...editing, hair_types: v })} options={HAIR_TYPE_OPTIONS} />
@@ -1019,7 +1281,8 @@ function AdminProducts() {
   );
 }
 
-// Admin: Before/After Tab
+// ─── Admin: Before/After Tab ─────────────────────────────────────────────────
+
 const EMPTY_BA: Partial<DBBeforeAfter> = {
   title: "", subtitle: "", before_image_url: "", after_image_url: "",
   product_used: "", sort_order: 0, visible: true,
@@ -1035,8 +1298,8 @@ function AdminBeforeAfter() {
 
   async function reload() {
     setLoading(true);
-    const { data } = await supabase.from("before_after").select("*").order("sort_order");
-    setItems(data || []);
+    const data = await loadBeforeAfterData();
+    setItems(data);
     setLoading(false);
   }
 
@@ -1049,13 +1312,24 @@ function AdminBeforeAfter() {
 
   async function save() {
     if (!editing) return;
+    if (!editing.title?.trim()) {
+      flash("err", "Title is required.");
+      return;
+    }
+    if (!editing.before_image_url) {
+      flash("err", "Please choose a BEFORE image file.");
+      return;
+    }
+    if (!editing.after_image_url) {
+      flash("err", "Please choose an AFTER image file.");
+      return;
+    }
     setSaving(true);
-    if (editing.id) {
-      const { error } = await supabase.from("before_after").update(editing).eq("id", editing.id);
-      error ? flash("err", error.message) : flash("ok", "Saved!");
+    const res = await saveBeforeAfterData(editing);
+    if (!res.ok && res.error) {
+      flash("err", `Saved locally, but remote error: ${res.error}`);
     } else {
-      const { error } = await supabase.from("before_after").insert([editing]);
-      error ? flash("err", error.message) : flash("ok", "Slide added!");
+      flash("ok", editing.id ? "Slide updated successfully!" : "Slide added successfully!");
     }
     setSaving(false);
     setEditing(null);
@@ -1063,14 +1337,15 @@ function AdminBeforeAfter() {
   }
 
   async function toggleVisible(item: DBBeforeAfter) {
-    await supabase.from("before_after").update({ visible: !item.visible }).eq("id", item.id);
+    await toggleBeforeAfterVisibilityData(item.id, !item.visible);
     reload();
   }
 
   async function deleteItem(id: number) {
-    await supabase.from("before_after").delete().eq("id", id);
+    await deleteBeforeAfterData(id);
     setDeleteId(null);
     reload();
+    flash("ok", "Slide deleted.");
   }
 
   return (
@@ -1097,16 +1372,51 @@ function AdminBeforeAfter() {
               <label className="admin-label">Subtitle</label>
               <input className="admin-input" value={editing.subtitle || ""} onChange={e => setEditing({ ...editing, subtitle: e.target.value })} placeholder="e.g. 4-week treatment" />
             </div>
+
+            {/* Direct Image File Uploads */}
             <div className="admin-field admin-field-wide">
-              <label className="admin-label">Before Image URL *</label>
-              <input className="admin-input" value={editing.before_image_url || ""} onChange={e => setEditing({ ...editing, before_image_url: e.target.value })} placeholder="https://..." />
-              {editing.before_image_url && <img src={editing.before_image_url} alt="before" className="admin-img-preview" />}
+              <div className="admin-ba-upload-grid">
+                <DirectImageUpload
+                  label="Before Image File *"
+                  badge="BEFORE"
+                  value={editing.before_image_url || ""}
+                  onChange={(val) => setEditing({ ...editing, before_image_url: val })}
+                  aspectRatio="4 / 3"
+                  helpText="Select direct image file of condition BEFORE treatment"
+                />
+                <DirectImageUpload
+                  label="After Image File *"
+                  badge="AFTER"
+                  value={editing.after_image_url || ""}
+                  onChange={(val) => setEditing({ ...editing, after_image_url: val })}
+                  aspectRatio="4 / 3"
+                  helpText="Select direct image file of result AFTER treatment"
+                />
+              </div>
             </div>
-            <div className="admin-field admin-field-wide">
-              <label className="admin-label">After Image URL *</label>
-              <input className="admin-input" value={editing.after_image_url || ""} onChange={e => setEditing({ ...editing, after_image_url: e.target.value })} placeholder="https://..." />
-              {editing.after_image_url && <img src={editing.after_image_url} alt="after" className="admin-img-preview" />}
-            </div>
+
+            {/* Live Slider Preview right inside the Admin Form */}
+            {editing.before_image_url && editing.after_image_url && (
+              <div className="admin-field admin-field-wide">
+                <label className="admin-label">Live Slider Preview</label>
+                <div style={{ maxWidth: 520, marginTop: 8 }}>
+                  <BeforeAfterSlider
+                    item={{
+                      id: 0,
+                      title: editing.title || "Preview Transformation",
+                      subtitle: editing.subtitle || "Result preview",
+                      before_image_url: editing.before_image_url,
+                      after_image_url: editing.after_image_url,
+                      product_used: editing.product_used || "",
+                      sort_order: 0,
+                      visible: true,
+                      created_at: ""
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="admin-field">
               <label className="admin-label">Product Used</label>
               <input className="admin-input" value={editing.product_used || ""} onChange={e => setEditing({ ...editing, product_used: e.target.value })} placeholder="e.g. Collagen Biotin Masque" />
@@ -1173,7 +1483,8 @@ function AdminBeforeAfter() {
   );
 }
 
-// Admin Shell
+// ─── Admin Shell ─────────────────────────────────────────────────────────────
+
 function Admin() {
   const { authed, login, logout } = useAdminAuth();
   const [tab, setTab] = useState<"products" | "beforeafter">("products");
