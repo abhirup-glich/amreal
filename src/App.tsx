@@ -1,14 +1,22 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, NavLink, Route, Routes, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import {
   ArrowRight, ChevronLeft, ChevronRight, Menu, Search, X,
   Instagram, Mail, Phone, MapPin, Check, Star,
   Plus, Trash2, Eye, EyeOff, Edit3, Save, Upload,
   LayoutDashboard, Package, ImageIcon, LogOut, AlertCircle, Loader,
-  FolderOpen
+  FolderOpen, Sparkles, ArrowLeftRight, FlaskConical
 } from "lucide-react";
-import { categories as staticCategories, concerns, hairTypes, heroSlides } from "./data";
+import { categories as staticCategories, concerns, hairTypes, heroSlides, products as staticProducts, Product } from "./data";
+import { IngredientBadge, INGREDIENT_META } from "./ingredientIcons";
+import {
+  CuticleDiagram,
+  ClinicalMetricsGram,
+  TreatmentProtocolDiagram,
+  HairDiagnosticGram,
+  ProductTechSpecsBar
+} from "./scientificGrams";
 import {
   DBProduct,
   DBBeforeAfter,
@@ -38,6 +46,28 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+}
+
+function dbToProduct(p: DBProduct): Product {
+  const staticMatch = staticProducts.find(s => s.slug === p.slug || s.name.toLowerCase() === p.name.toLowerCase());
+  return {
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    size: p.size,
+    category: p.category,
+    description: p.description,
+    image: p.image_url,
+    gallery: p.gallery_urls?.length ? p.gallery_urls : [p.image_url],
+    hairTypes: p.hair_types || [],
+    concerns: p.concerns || [],
+    ingredients: p.ingredients || [],
+    benefits: p.benefits || [],
+    suitableFor: p.suitable_for || [],
+    featured: p.featured,
+    heroBadge: staticMatch?.heroBadge,
+    tagline: staticMatch?.tagline
+  };
 }
 
 // ─── Brand / Navbar ──────────────────────────────────────────────────────────
@@ -76,6 +106,155 @@ function Announcement() {
   );
 }
 
+function NavSearch({ onSelect }: { onSelect?: () => void }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [productsList, setProductsList] = useState<Product[]>(staticProducts);
+  const navigate = useNavigate();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    loadProductsData().then(prods => {
+      if (prods && prods.length > 0) {
+        setProductsList(prods.map(dbToProduct));
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const results = query.trim()
+    ? productsList.filter(p => {
+        const q = query.toLowerCase().trim();
+        return [
+          p.name,
+          p.category,
+          p.size,
+          p.description,
+          ...(p.ingredients || []),
+          ...(p.concerns || []),
+          ...(p.hairTypes || [])
+        ].join(" ").toLowerCase().includes(q);
+      }).slice(0, 5)
+    : [];
+
+  const handleSelectProduct = (slug: string) => {
+    setOpen(false);
+    setQuery("");
+    if (onSelect) onSelect();
+    navigate(`/products/${slug}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      setOpen(false);
+      if (onSelect) onSelect();
+      navigate(`/products?search=${encodeURIComponent(query.trim())}`);
+    }
+  };
+
+  return (
+    <div className="nav-search-wrap" ref={wrapperRef}>
+      <form className={cx("nav-search-form", open && "active")} onSubmit={handleSearchSubmit}>
+        <Search size={14} className="nav-search-icon" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={e => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Search products, actives..."
+          aria-label="Search products"
+        />
+        {query && (
+          <button
+            type="button"
+            className="nav-search-clear-btn"
+            onClick={() => {
+              setQuery("");
+              inputRef.current?.focus();
+            }}
+            aria-label="Clear search"
+          >
+            <X size={13} />
+          </button>
+        )}
+      </form>
+
+      <AnimatePresence>
+        {open && query.trim().length > 0 && (
+          <motion.div
+            className="nav-search-results"
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            <div className="nav-search-header">
+              <span>Matching Products ({results.length})</span>
+            </div>
+
+            {results.length > 0 ? (
+              <div className="nav-search-list">
+                {results.map(prod => (
+                  <button
+                    key={prod.id}
+                    className="nav-search-item"
+                    type="button"
+                    onClick={() => handleSelectProduct(prod.slug)}
+                  >
+                    <img src={prod.image} alt={prod.name} className="nav-search-thumb" />
+                    <div className="nav-search-item-info">
+                      <div className="nav-search-item-top">
+                        <span className="nav-search-category">{prod.category}</span>
+                        <span className="nav-search-size">{prod.size}</span>
+                      </div>
+                      <h4>{prod.name}</h4>
+                      {prod.ingredients && prod.ingredients.length > 0 && (
+                        <div className="nav-search-item-ing">
+                          {prod.ingredients.slice(0, 2).map((ing, idx) => (
+                            <IngredientBadge key={idx} text={ing} variant="compact" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <ArrowRight size={14} className="nav-search-arrow" />
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="nav-search-view-all"
+                  onClick={handleSearchSubmit}
+                >
+                  View all results for "{query}" <ArrowRight size={13} />
+                </button>
+              </div>
+            ) : (
+              <div className="nav-search-empty">
+                <p>No products found for "<b>{query}</b>"</p>
+                <span>Try searching: <i>Permanent Spa, Coffee Scrub, Silk Protein, Nanoplastia, Redensyl</i></span>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -101,6 +280,7 @@ function Navbar() {
             {links.map(([label, to]) => (
               <NavLink key={to} to={to} className={({ isActive }) => cx("nav-link", isActive && "active")}>{label}</NavLink>
             ))}
+            <NavSearch />
             <Link className="button button-small" to="/contact">Enquire Now <ArrowRight size={15} /></Link>
           </nav>
           <button className="mobile-menu-button" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
@@ -110,6 +290,9 @@ function Navbar() {
                 <div className="mobile-menu-top">
                   <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
                   <button onClick={() => setOpen(false)} aria-label="Close menu"><X size={20} /></button>
+                </div>
+                <div className="mobile-search-section">
+                  <NavSearch onSelect={() => setOpen(false)} />
                 </div>
                 <div className="mobile-links">
                   {links.map(([label, to]) => (
@@ -213,7 +396,7 @@ function Marquee() {
 
 // ─── Before/After Slider ─────────────────────────────────────────────────────
 
-function BeforeAfterSlider({ item }: { item: DBBeforeAfter }) {
+function BeforeAfterSlider({ item, showInfo = true, className = "" }: { item: DBBeforeAfter; showInfo?: boolean; className?: string }) {
   const [pos, setPos] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
@@ -225,20 +408,44 @@ function BeforeAfterSlider({ item }: { item: DBBeforeAfter }) {
     setPos(pct);
   }
 
-  function onMouseDown() { dragging.current = true; }
-  function onMouseMove(e: React.MouseEvent) { if (dragging.current) updatePos(e.clientX); }
-  function onMouseUp() { dragging.current = false; }
-  function onTouchMove(e: React.TouchEvent) { updatePos(e.touches[0].clientX); }
+  function onMouseDown(e: React.MouseEvent) {
+    dragging.current = true;
+    updatePos(e.clientX);
+  }
+
+  function onTouchStart(e: React.TouchEvent) {
+    dragging.current = true;
+    if (e.touches.length > 0) updatePos(e.touches[0].clientX);
+  }
+
+  useEffect(() => {
+    function onGlobalMove(e: MouseEvent) {
+      if (dragging.current) updatePos(e.clientX);
+    }
+    function onGlobalUp() {
+      dragging.current = false;
+    }
+    function onGlobalTouchMove(e: TouchEvent) {
+      if (dragging.current && e.touches.length > 0) updatePos(e.touches[0].clientX);
+    }
+    window.addEventListener("mousemove", onGlobalMove);
+    window.addEventListener("mouseup", onGlobalUp);
+    window.addEventListener("touchmove", onGlobalTouchMove, { passive: true });
+    window.addEventListener("touchend", onGlobalUp);
+    return () => {
+      window.removeEventListener("mousemove", onGlobalMove);
+      window.removeEventListener("mouseup", onGlobalUp);
+      window.removeEventListener("touchmove", onGlobalTouchMove);
+      window.removeEventListener("touchend", onGlobalUp);
+    };
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      className="ba-slider"
+      className={cx("ba-slider", className)}
       onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onTouchMove={onTouchMove}
+      onTouchStart={onTouchStart}
     >
       <div className="ba-after" style={{ backgroundImage: `url(${item.after_image_url})` }} />
       <div className="ba-before" style={{ backgroundImage: `url(${item.before_image_url})`, clipPath: `inset(0 ${100 - pos}% 0 0)` }} />
@@ -250,11 +457,13 @@ function BeforeAfterSlider({ item }: { item: DBBeforeAfter }) {
       </div>
       <span className="ba-label ba-label-before">BEFORE</span>
       <span className="ba-label ba-label-after">AFTER</span>
-      <div className="ba-info">
-        <h3>{item.title}</h3>
-        {item.subtitle && <p>{item.subtitle}</p>}
-        {item.product_used && <span className="ba-product">Used: {item.product_used}</span>}
-      </div>
+      {showInfo && (
+        <div className="ba-info">
+          <h3>{item.title}</h3>
+          {item.subtitle && <p>{item.subtitle}</p>}
+          {item.product_used && <span className="ba-product">Used: {item.product_used}</span>}
+        </div>
+      )}
     </div>
   );
 }
@@ -290,43 +499,9 @@ function BeforeAfterSection({ items }: { items: DBBeforeAfter[] }) {
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
-type Product = {
-  id: number;
-  name: string;
-  slug: string;
-  size: string;
-  category: string;
-  description: string;
-  image: string;
-  gallery: string[];
-  hairTypes: string[];
-  concerns: string[];
-  ingredients: string[];
-  benefits: string[];
-  suitableFor: string[];
-  featured?: boolean;
-};
-
-function dbToProduct(p: DBProduct): Product {
-  return {
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    size: p.size,
-    category: p.category,
-    description: p.description,
-    image: p.image_url,
-    gallery: p.gallery_urls?.length ? p.gallery_urls : [p.image_url],
-    hairTypes: p.hair_types || [],
-    concerns: p.concerns || [],
-    ingredients: p.ingredients || [],
-    benefits: p.benefits || [],
-    suitableFor: p.suitable_for || [],
-    featured: p.featured,
-  };
-}
-
 function ProductCard({ product }: { product: Product }) {
+  const topIngredients = product.ingredients.slice(0, 3);
+
   return (
     <motion.article className="product-card" whileHover={{ y: -5 }} transition={{ duration: .25 }}>
       <Link to={`/products/${product.slug}`} className="product-image">
@@ -335,14 +510,149 @@ function ProductCard({ product }: { product: Product }) {
       </Link>
       <div className="product-info">
         <span className="product-category">{product.category}</span>
+        {product.heroBadge && <span className="hero-tag">{product.heroBadge}</span>}
         <h3>{product.name}</h3>
-        <p>{product.size} · {product.description}</p>
+        
+        {/* Micro-Spec Grams */}
+        <div className="card-specs-row">
+          <span className="card-spec-pill"><Package size={11} /> {product.size}</span>
+          <span className="card-spec-pill"><FlaskConical size={11} /> pH 4.5</span>
+          <span className="card-spec-pill safety">0% Formaldehyde</span>
+        </div>
+        
+        {topIngredients.length > 0 && (
+          <div className="product-card-badges">
+            {topIngredients.map((ing, i) => (
+              <IngredientBadge key={i} text={ing} variant="compact" />
+            ))}
+          </div>
+        )}
+
         <div className="product-actions">
           <Link to={`/products/${product.slug}`}>View Product <ArrowRight size={15} /></Link>
           <Link to={`/contact?product=${encodeURIComponent(product.name)}`}>Enquire <ArrowRight size={15} /></Link>
         </div>
       </div>
     </motion.article>
+  );
+}
+
+// ─── Hero Product Section: Permanent Hair Spa ────────────────────────────────
+
+function HeroHairSpaSection() {
+  const spaImages = [
+    { url: "/assets/hair-ritual.jpeg", label: "Packaging", caption: "AMREAL Permanent Hair Spa — 1000 ml Professional Format" },
+    { url: "/assets/permanent-spa-before-after.jpg", label: "Before & After", caption: "Instant In-Salon Transformation • Smooth & Frizz-Free" },
+    { url: "/assets/permanent-spa-result.jpg", label: "2 Months After", caption: "Long-Lasting Results • Sleek, Manageable Hair Retained for 3–5 Months" },
+    { url: "/assets/permanent-spa-texture.jpg", label: "Luxe Texture", caption: "Concentrated Collagen & Keratin Fibre Conditioning Formula" },
+    { url: "/assets/permanent-spa-lifestyle.jpg", label: "Salon Ritual", caption: "One Professional Ritual • Customized for All Hair Types" }
+  ];
+
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  return (
+    <section className="hero-spa-section" id="hero-spa">
+      <div className="hero-spa-container">
+        <div className="hero-spa-gallery">
+          <div className="hero-spa-main-pic">
+            <img src={spaImages[activeIdx].url} alt="AMREAL Permanent Hair Spa" />
+            <div className="hero-spa-badge-float">
+              <Star className="star-icon" size={14} fill="currentColor" />
+              <span>AMREAL HERO PRODUCT</span>
+            </div>
+            <div className="hero-spa-view-caption">
+              <span>{spaImages[activeIdx].label}</span>
+              <p>{spaImages[activeIdx].caption}</p>
+            </div>
+          </div>
+          <div className="hero-spa-thumbs">
+            {spaImages.map((img, i) => (
+              <button
+                key={i}
+                className={cx("hero-spa-thumb", i === activeIdx && "active")}
+                onClick={() => setActiveIdx(i)}
+                aria-label={`View ${img.label}`}
+              >
+                <img src={img.url} alt="" />
+                <span className="hero-spa-thumb-label">{img.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="hero-spa-info">
+          <span className="hero-spa-eyebrow">OUR FLAGSHIP HERO RITUAL</span>
+          <h2>MORE THAN A<br /><em>HAIR SPA.</em></h2>
+
+          <div className="hero-spa-highlight">
+            <div className="hero-spa-highlight-lead">
+              <span>3–5 MONTHS</span> OF SMOOTHER, MORE MANAGEABLE HAIR.
+            </div>
+            <p className="hero-spa-highlight-sub">
+              ONE RITUAL. LONG-LASTING RESULTS.
+            </p>
+          </div>
+
+          {/* Clinical Metrics Infogram */}
+          <ClinicalMetricsGram />
+
+          <div className="hero-spa-ingredients-title">
+            <span>KEY INGREDIENT TECHNOLOGY</span>
+          </div>
+
+          <div className="hero-spa-ingredients-grid">
+            <div className="hero-spa-ing-card">
+              <div className="ing-icon-box" style={{ background: "#EEF5FA", borderColor: "#C5DCEB" }}>
+                {INGREDIENT_META["collagen"].icon}
+              </div>
+              <div className="hero-spa-ing-info">
+                <h5>01 · Collagen Proteins</h5>
+                <span>Fibre Conditioning</span>
+              </div>
+            </div>
+
+            <div className="hero-spa-ing-card">
+              <div className="ing-icon-box" style={{ background: "#F6F1F8", borderColor: "#DECDE4" }}>
+                {INGREDIENT_META["keratin"].icon}
+              </div>
+              <div className="hero-spa-ing-info">
+                <h5>02 · Hydrolyzed Keratin</h5>
+                <span>Smoothness & Manageability</span>
+              </div>
+            </div>
+
+            <div className="hero-spa-ing-card">
+              <div className="ing-icon-box" style={{ background: "#FCF8EC", borderColor: "#E9D9A6" }}>
+                {INGREDIENT_META["argan-oil"].icon}
+              </div>
+              <div className="hero-spa-ing-info">
+                <h5>03 · Moroccan Argan Oil</h5>
+                <span>Nourishment & Shine</span>
+              </div>
+            </div>
+
+            <div className="hero-spa-ing-card">
+              <div className="ing-icon-box" style={{ background: "#FDF5EE", borderColor: "#F6D8BF" }}>
+                {INGREDIENT_META["pro-vitamin-b5"].icon}
+              </div>
+              <div className="hero-spa-ing-info">
+                <h5>04 · Pro-Vitamin B5</h5>
+                <span>Softness & Conditioning</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-spa-hairtype-note">
+            <span>✨ <b>Suitable for All Hair Types:</b> Personalized according to hair texture, condition & treatment history.</span>
+          </div>
+
+          <div className="hero-spa-actions">
+            <Button to="/products/permanent-hair-spa">Explore Permanent Hair Spa</Button>
+            <Button to="/contact?product=Permanent%20Hair%20Spa" secondary>Enquire for Your Salon</Button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -380,21 +690,36 @@ function Home() {
               <h2>MORE THAN<br /><em>BEAUTY.</em></h2>
             </div>
             <div className="intro-copy">
-              <p>AMREAL Professional brings together professional beauty solutions, thoughtful product discovery and an experience created for modern beauty professionals.</p>
-              <Button to="/about">Discover AMREAL</Button>
+              <p>Biomimetic hair science engineered for certified salons. Zero formaldehyde, high-potency protein complexes, and isoelectric cuticle alignment.</p>
+              <div className="card-specs-row" style={{ marginTop: "14px", marginBottom: "22px" }}>
+                <span className="card-spec-pill"><Sparkles size={11} /> 3–5 Mo Retention</span>
+                <span className="card-spec-pill"><FlaskConical size={11} /> pH 4.0–4.5 Seal</span>
+                <span className="card-spec-pill safety">0% Formaldehyde</span>
+                <span className="card-spec-pill"><Package size={11} /> 1000g Salon Backbar</span>
+              </div>
+              <Button to="/about">Discover The Science</Button>
             </div>
           </section>
         </Reveal>
 
         <section className="benefits"><div className="benefits-inner">
-          {["Professional Formulas", "Salon Ready", "Quality Focused", "Beauty Professionals", "Business Supply"].map((x, i) => (
-            <div className="benefit" key={x}>
-              <span>0{i + 1}</span>
-              <h3>{x}</h3>
-              <p>Designed around professional beauty needs.</p>
+          {[
+            { num: "01", title: "Biomimetic Sealing", sub: "pH 4.5 Isoelectric Cuticle Lock" },
+            { num: "02", title: "Cortex Bond Plex", sub: "Collagen & Keratin Crosslink" },
+            { num: "03", title: "3–5 Mo Retention", sub: "Clinical Durability Protocol" },
+            { num: "04", title: "1000g Salon Formats", sub: "High-Yield Backbar Formulation" },
+            { num: "05", title: "Verified B2B Supply", sub: "0% Formaldehyde Certified" },
+          ].map((item) => (
+            <div className="benefit" key={item.num}>
+              <span>{item.num}</span>
+              <h3>{item.title}</h3>
+              <p>{item.sub}</p>
             </div>
           ))}
         </div></section>
+
+        {/* HERO PRODUCT SPOTLIGHT: PERMANENT HAIR SPA */}
+        <HeroHairSpaSection />
 
         <section className="section cream">
           <SectionHeading eyebrow="THE COLLECTION" title="EXPLORE THE AMREAL COLLECTION" text="Professional beauty categories designed for discovery." />
@@ -424,13 +749,11 @@ function Home() {
           <div className="center-button"><Button to="/products">View All Products</Button></div>
         </section>
 
-        <section className="editorial">
-          <div className="editorial-image" style={{ backgroundImage: `url(${heroSlides[2].image})` }} />
-          <div className="editorial-copy">
-            <span className="eyebrow">HAIR RITUAL</span>
-            <h2>MORE THAN<br /><em>CARE.</em></h2>
-            <p>Professional beauty routines deserve a premium product experience. Explore formats, categories and business-ready solutions.</p>
-            <Button to="/products">Discover Products</Button>
+        {/* Clinical Salon Protocol Diagram */}
+        <section className="section cream" style={{ borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+          <SectionHeading eyebrow="CLINICAL PROTOCOL" title="THE 3-STEP TRANSFORMATION PROTOCOL" text="Precision salon ritual from clarifying detox to thermo-mechanical cuticle lock." />
+          <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+            <TreatmentProtocolDiagram />
           </div>
         </section>
 
@@ -462,20 +785,22 @@ function Home() {
           </div>
         </section>
 
-        <section className="ingredients section cream">
-          <div>
-            <span className="eyebrow">FORMULATION STORY</span>
-            <h2>BEAUTY MEETS<br /><em>FORMULATION.</em></h2>
-            <p>Only verified formulation information should be published. The demo therefore keeps ingredient claims intentionally conservative until AMREAL supplies approved details.</p>
-          </div>
-          <div className="ingredient-stack">
-            {["ARGAN OIL", "PRO-VITAMIN B5", "COLLAGEN PLEX"].map((x, i) => (
-              <div key={x}>
-                <span>0{i + 1}</span>
-                <h3>{x}</h3>
-                <p>Approved product information to be supplied by AMREAL.</p>
-              </div>
-            ))}
+        {/* ACTIVE BIO-TECHNOLOGY GRID (CUSTOM LOGOS) */}
+        <section className="tech-showcase-section">
+          <SectionHeading
+            eyebrow="BIO-ACTIVE TECHNOLOGY"
+            title="UNDERSTAND AT ONE SIGHT"
+            text="Clean, identifiable bio-actives engineered with clinical precision for professional hair and scalp wellness."
+          />
+          <div className="tech-showcase-grid">
+            <IngredientBadge text="Coconut Oil" variant="card" />
+            <IngredientBadge text="Coffee Extract" variant="card" />
+            <IngredientBadge text="Hydrolyzed Silk Protein" variant="card" />
+            <IngredientBadge text="Collagen Proteins & Plex" variant="card" />
+            <IngredientBadge text="Hydrolyzed Keratin" variant="card" />
+            <IngredientBadge text="3% Redensyl" variant="card" />
+            <IngredientBadge text="Moroccan Argan Oil" variant="card" />
+            <IngredientBadge text="Salicylic Acid (BHA)" variant="card" />
           </div>
         </section>
 
@@ -613,11 +938,107 @@ function ProductsPage() {
 
 // ─── Product Detail ───────────────────────────────────────────────────────────
 
+function getProductSliderItem(product: Product, gallery: string[]): DBBeforeAfter {
+  const nameLower = product.name.toLowerCase();
+  const slugLower = product.slug.toLowerCase();
+
+  if (slugLower.includes("permanent-hair-spa") || nameLower.includes("hair spa")) {
+    return {
+      id: 1,
+      title: "Permanent Hair Spa Transformation",
+      subtitle: "One Ritual • 3–5 Months Smoothness & Frizz-Free Manageability",
+      before_image_url: "/assets/permanent-spa-before-after.jpg",
+      after_image_url: "/assets/permanent-spa-result.jpg",
+      product_used: "AMREAL Permanent Hair Spa (1000 ml)",
+      sort_order: 1,
+      visible: true,
+      created_at: new Date().toISOString()
+    };
+  }
+  if (slugLower.includes("coffee") || slugLower.includes("scrub") || nameLower.includes("scrub")) {
+    return {
+      id: 2,
+      title: "Coffee Scalp Scrub No. 2 Exfoliation",
+      subtitle: "Flake Elimination & Root Purification Result",
+      before_image_url: "/assets/coffee-scrub-detail.jpg",
+      after_image_url: "/assets/scalp-detox.jpeg",
+      product_used: "AMREAL Coffee Scalp Scrub — No.2",
+      sort_order: 2,
+      visible: true,
+      created_at: new Date().toISOString()
+    };
+  }
+  if (slugLower.includes("silk") || nameLower.includes("silk")) {
+    return {
+      id: 3,
+      title: "Silk Protein Collagen Therapy",
+      subtitle: "Intense Frizz Elimination & Mirror Silkiness",
+      before_image_url: "/assets/permanent-spa-texture.jpg",
+      after_image_url: "/assets/nanoplastia-treatment.jpg",
+      product_used: "Silk Protein Collagen Therapy",
+      sort_order: 3,
+      visible: true,
+      created_at: new Date().toISOString()
+    };
+  }
+  if (slugLower.includes("nanoplastia") || nameLower.includes("nanoplastia")) {
+    return {
+      id: 4,
+      title: "Nanoplastia Fibre Realignment",
+      subtitle: "Deep Amino Acid Alignment & Mirror Gloss",
+      before_image_url: "/assets/permanent-spa-before-after.jpg",
+      after_image_url: "/assets/nanoplastia-treatment.jpg",
+      product_used: "AMREAL Nanoplastia Treatment",
+      sort_order: 4,
+      visible: true,
+      created_at: new Date().toISOString()
+    };
+  }
+  if (slugLower.includes("tonic") || slugLower.includes("hairfall") || nameLower.includes("hairfall")) {
+    return {
+      id: 5,
+      title: "Anti-Hairfall Follicle Vitality",
+      subtitle: "Targeted Scalp & DHT-Pathway Follicle Density",
+      before_image_url: "/assets/anti-hairfall-tonic-lifestyle.jpg",
+      after_image_url: "/assets/anti-hairfall-serum.jpeg",
+      product_used: "AMREAL Anti-Hairfall Scalp Tonic",
+      sort_order: 5,
+      visible: true,
+      created_at: new Date().toISOString()
+    };
+  }
+  if (slugLower.includes("masque") || slugLower.includes("collagen-plex") || nameLower.includes("masque")) {
+    return {
+      id: 6,
+      title: "Collagen Plex Biotin Masque Recovery",
+      subtitle: "Restorative Fibre Repair & Cuticle Realignment",
+      before_image_url: "/assets/permanent-spa-before-after.jpg",
+      after_image_url: "/assets/permanent-spa-result.jpg",
+      product_used: product.name,
+      sort_order: 6,
+      visible: true,
+      created_at: new Date().toISOString()
+    };
+  }
+  return {
+    id: 99,
+    title: `${product.name} Transformation Result`,
+    subtitle: "Before & After Clinical Comparison",
+    before_image_url: gallery[1] || "/assets/permanent-spa-before-after.jpg",
+    after_image_url: gallery[2] || gallery[0] || "/assets/permanent-spa-result.jpg",
+    product_used: product.name,
+    sort_order: 99,
+    visible: true,
+    created_at: new Date().toISOString()
+  };
+}
+
 function ProductDetail() {
   const { slug } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [active, setActive] = useState(0);
+  const [[page, direction], setPage] = useState<[number, number]>([0, 0]);
+  const [isSliderMode, setIsSliderMode] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -628,40 +1049,279 @@ function ProductDetail() {
       setProduct(found || null);
       setAllProducts(mapped);
       setLoading(false);
+      setPage([0, 0]);
+      setIsSliderMode(true);
     }
     load();
   }, [slug]);
+
+  const gallery = product ? (product.gallery && product.gallery.length ? product.gallery : [product.image]).slice(0, 5) : [];
+
+  // Determine which slide is the connected Transformation Result slide (slot 2 or first containing before-after / result / detail)
+  const resultIndex = (() => {
+    if (!gallery.length) return 0;
+    const found = gallery.findIndex(img => 
+      img.includes("before-after") || 
+      img.includes("result") || 
+      img.includes("detail")
+    );
+    if (found !== -1) return found;
+    return gallery.length > 1 ? 1 : 0;
+  })();
+
+  const isResultSlide = page === resultIndex;
+  const sliderItem = product ? getProductSliderItem(product, gallery) : null;
+
+  const paginate = (newDirection: number) => {
+    if (!gallery.length) return;
+    const nextIndex = (page + newDirection + gallery.length) % gallery.length;
+    setPage([nextIndex, newDirection]);
+  };
+
+  const jumpTo = (newIndex: number) => {
+    if (newIndex === page || !gallery.length) return;
+    const dir = newIndex > page ? 1 : -1;
+    setPage([newIndex, dir]);
+  };
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "ArrowLeft") paginate(-1);
+      if (e.key === "ArrowRight") paginate(1);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [page, gallery.length]);
 
   if (loading) return <><Navbar /><div className="loading-state full"><Loader className="spin" size={36} /></div></>;
   if (!product) return <NotFound />;
 
   const related = allProducts.filter(p => p.id !== product.id).slice(0, 4);
 
+  const getSlotLabel = (idx: number, isResult: boolean) => {
+    if (isResult) return "Result Slider ✨";
+    if (idx === 0) return "Product Pack";
+    if (idx === 2) return "Clinical Finish";
+    if (idx === 3) return "Luxe Texture";
+    if (idx === 4) return "Salon Ritual";
+    return `Picture 0${idx + 1}`;
+  };
+
+  const slideVariants: Variants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? 55 : -55,
+      opacity: 0,
+      scale: 0.96,
+      filter: "blur(6px)"
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: {
+        x: { type: "spring", stiffness: 320, damping: 28 },
+        opacity: { duration: 0.3 },
+        scale: { duration: 0.35, ease: "easeOut" },
+        filter: { duration: 0.25 }
+      }
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? -55 : 55,
+      opacity: 0,
+      scale: 1.04,
+      filter: "blur(6px)",
+      transition: {
+        x: { duration: 0.24, ease: "easeInOut" },
+        opacity: { duration: 0.2 },
+        scale: { duration: 0.24 },
+        filter: { duration: 0.2 }
+      }
+    })
+  };
+
   return (
     <>
       <Navbar />
       <main className="detail">
         <div className="detail-gallery">
-          <div className="detail-main"><img src={product.gallery[active]} alt={product.name} /></div>
-          <div className="thumbs">
-            {product.gallery.map((x, i) => (
-              <button key={x} className={i === active ? "active" : ""} onClick={() => setActive(i)}>
-                <img src={x} alt="" />
+          {/* Main Visual Frame with Smooth Animation */}
+          <div className="detail-main-frame">
+            {/* Top Pill: Counter & Status */}
+            <div className="detail-counter-pill">
+              <span className="counter-digits">{String(page + 1).padStart(2, "0")} / {String(gallery.length).padStart(2, "0")}</span>
+              {isResultSlide && (
+                <span className="counter-badge-result">
+                  <Sparkles size={11} /> Connected Result Slider
+                </span>
+              )}
+            </div>
+
+            {/* If on result slide: allow toggling between interactive slider and full static image */}
+            {isResultSlide && sliderItem && (
+              <div className="detail-result-toolbar">
+                <button
+                  type="button"
+                  className={cx("detail-mode-toggle", isSliderMode && "active")}
+                  onClick={() => setIsSliderMode(!isSliderMode)}
+                  title="Toggle interactive comparison slider"
+                >
+                  <Sparkles size={13} />
+                  <span>{isSliderMode ? "Interactive Slider Active" : "View Static Image"}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Quick jump to result slider if on another picture */}
+            {!isResultSlide && gallery.length > 1 && (
+              <button
+                type="button"
+                className="detail-quick-result-cta"
+                onClick={() => jumpTo(resultIndex)}
+                title="View Before & After Result Slider"
+              >
+                <Sparkles size={12} />
+                <span>Jump to Result Slider ({String(resultIndex + 1).padStart(2, "0")})</span>
               </button>
-            ))}
+            )}
+
+            {/* Animated Active Image or Interactive Slider */}
+            <div className="detail-viewport">
+              <AnimatePresence initial={false} custom={direction} mode="wait">
+                <motion.div
+                  key={page}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="detail-slide-content"
+                >
+                  {isResultSlide && isSliderMode && sliderItem ? (
+                    <div className="detail-embedded-slider">
+                      <BeforeAfterSlider item={sliderItem} showInfo={false} />
+                    </div>
+                  ) : (
+                    <img
+                      src={gallery[page] || product.image}
+                      alt={`${product.name} - Picture ${page + 1}`}
+                      className="detail-image"
+                      loading="eager"
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Slider Guidance hint when slider is active */}
+            {isResultSlide && isSliderMode && (
+              <div className="detail-slider-hint">
+                <ArrowLeftRight size={13} />
+                <span>Drag divider left & right to reveal before & after result</span>
+              </div>
+            )}
+
+            {/* Prev / Next Directional Chevrons */}
+            {gallery.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="detail-nav-arrow prev"
+                  onClick={() => paginate(-1)}
+                  aria-label="Previous product picture"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  className="detail-nav-arrow next"
+                  onClick={() => paginate(1)}
+                  aria-label="Next product picture"
+                >
+                  <ChevronRight size={22} />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Up to 5 Thumbnails with Animated Indicator */}
+          <div className="detail-thumbnails-row">
+            {gallery.map((x, i) => {
+              const isThisResult = i === resultIndex;
+              const isActive = i === page;
+              return (
+                <button
+                  key={`${x}-${i}`}
+                  type="button"
+                  className={cx(
+                    "detail-thumb-card",
+                    isActive && "active",
+                    isThisResult && "is-result"
+                  )}
+                  onClick={() => jumpTo(i)}
+                  title={getSlotLabel(i, isThisResult)}
+                >
+                  <div className="detail-thumb-img-box">
+                    <img src={x} alt="" />
+                    {isThisResult && (
+                      <span className="thumb-star-pill" title="Connected to Result Slider">
+                        <Sparkles size={10} />
+                      </span>
+                    )}
+                  </div>
+                  <span className="detail-thumb-caption">
+                    <span className="thumb-idx">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="thumb-text">{getSlotLabel(i, isThisResult)}</span>
+                  </span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeDetailThumbIndicator"
+                      className="detail-thumb-glow-border"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="detail-copy">
           <span className="product-category">{product.category}</span>
+          {product.heroBadge && <span className="hero-tag">{product.heroBadge}</span>}
           <h1>{product.name}</h1>
-          <div className="detail-size">{product.size}</div>
-          <p className="lead">{product.description}</p>
-          <div className="detail-block"><h3>Benefits</h3>{product.benefits.map(x => <p key={x}>— {x}</p>)}</div>
-          <div className="detail-block"><h3>Ingredients</h3>{product.ingredients.map(x => <p key={x}>— {x}</p>)}</div>
-          <div className="detail-tags">
-            <div><span>Hair Types</span>{product.hairTypes.map(x => <b key={x}>{x}</b>)}</div>
-            <div><span>Concerns</span>{product.concerns.map(x => <b key={x}>{x}</b>)}</div>
+
+          {/* Technical Specs Bar */}
+          <ProductTechSpecsBar size={product.size} category={product.category} tagline={product.tagline} />
+
+          <p className="lead" style={{ margin: "16px 0 20px" }}>{product.description}</p>
+
+          {/* Microscopic Cuticle Realignment Infogram */}
+          <CuticleDiagram />
+
+          {/* Active Ingredients & Technology with SVG Logos */}
+          <div className="detail-ingredients-wrap">
+            <h3 style={{ fontSize: "14px", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: "12px", color: "var(--charcoal)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <FlaskConical size={16} color="#8C3E4C" />
+              <span>Active Bio-Technological Compounds</span>
+            </h3>
+            <div className="detail-ingredients-grid">
+              {product.ingredients.map((ing, idx) => (
+                <IngredientBadge key={idx} text={ing} variant="card" />
+              ))}
+            </div>
           </div>
+
+          {/* Hair Diagnostic & Compatibility Matrix */}
+          <HairDiagnosticGram
+            hairTypes={product.hairTypes}
+            concerns={product.concerns}
+            suitableFor={product.suitableFor}
+          />
+
+          {/* 3-Step Treatment Protocol Diagram */}
+          <TreatmentProtocolDiagram />
+
           <Button to={`/contact?product=${encodeURIComponent(product.name)}`}>Enquire About This Product</Button>
         </div>
       </main>
@@ -1005,8 +1665,10 @@ function DirectImageUpload({
   );
 }
 
+const MAX_GALLERY_IMAGES = 5;
+
 function DirectGalleryUpload({
-  label = "Gallery Image Files",
+  label = "Product Pictures (Up to 5 Pictures)",
   values,
   onChange,
 }: {
@@ -1020,10 +1682,14 @@ function DirectGalleryUpload({
   const handleFiles = async (files: FileList | File[]) => {
     const validFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (!validFiles.length) return;
+    const remainingSlots = Math.max(0, MAX_GALLERY_IMAGES - values.length);
+    if (remainingSlots <= 0) return;
+
     setLoading(true);
     try {
-      const processed = await Promise.all(validFiles.map(f => processDirectImageFile(f)));
-      onChange([...values, ...processed]);
+      const toProcess = validFiles.slice(0, remainingSlots);
+      const processed = await Promise.all(toProcess.map(f => processDirectImageFile(f)));
+      onChange([...values, ...processed].slice(0, MAX_GALLERY_IMAGES));
     } catch (err) {
       console.error("Error processing gallery images:", err);
     } finally {
@@ -1035,11 +1701,38 @@ function DirectGalleryUpload({
     onChange(values.filter((_, i) => i !== index));
   };
 
+  const moveItem = (index: number, direction: number) => {
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= values.length) return;
+    const copy = [...values];
+    const [moved] = copy.splice(index, 1);
+    copy.splice(targetIdx, 0, moved);
+    onChange(copy);
+  };
+
+  const getSlotDescription = (idx: number) => {
+    if (idx === 0) return "Slot 1: Main Pack";
+    if (idx === 1) return "Slot 2: Result Slider ✨";
+    if (idx === 2) return "Slot 3: Clinical Finish";
+    if (idx === 3) return "Slot 4: Luxe Texture";
+    if (idx === 4) return "Slot 5: Salon Ritual";
+    return `Picture 0${idx + 1}`;
+  };
+
+  const isFull = values.length >= MAX_GALLERY_IMAGES;
+
   return (
     <div className="direct-gallery-field">
       <div className="direct-uploader-header">
-        <label className="admin-label">{label}</label>
-        <span className="direct-gallery-count">{values.length} direct image{values.length === 1 ? "" : "s"} selected</span>
+        <div>
+          <label className="admin-label">{label}</label>
+          <p style={{ fontSize: "12px", color: "var(--muted)", margin: "2px 0 0" }}>
+            Up to 5 pictures allowed. Slot 2 connects directly to the interactive Before/After comparison slider.
+          </p>
+        </div>
+        <span className={cx("direct-gallery-count", isFull && "max-reached")}>
+          {values.length} / {MAX_GALLERY_IMAGES} pictures {isFull ? "(Max reached)" : ""}
+        </span>
       </div>
 
       <input
@@ -1047,6 +1740,7 @@ function DirectGalleryUpload({
         type="file"
         accept="image/*"
         multiple
+        disabled={isFull}
         style={{ display: "none" }}
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
@@ -1058,34 +1752,62 @@ function DirectGalleryUpload({
 
       <div className="direct-gallery-grid">
         {values.map((url, i) => (
-          <div key={i} className="direct-gallery-item">
-            <img src={url} alt={`Gallery ${i + 1}`} />
-            <button
-              type="button"
-              className="direct-gallery-remove"
-              title="Remove image"
-              onClick={() => removeAt(i)}
-            >
-              <X size={12} />
-            </button>
+          <div key={i} className={cx("direct-gallery-item", i === 1 && "is-result-slot")}>
+            <img src={url} alt={`Picture ${i + 1}`} />
+            <div className="direct-gallery-slot-badge">
+              {i === 1 ? "✨ Slot 2 (Result Slider)" : `Slot ${i + 1}`}
+            </div>
+            <div className="direct-gallery-item-actions">
+              {i > 0 && (
+                <button
+                  type="button"
+                  className="direct-gallery-reorder-btn"
+                  title="Move earlier"
+                  onClick={() => moveItem(i, -1)}
+                >
+                  <ChevronLeft size={12} />
+                </button>
+              )}
+              {i < values.length - 1 && (
+                <button
+                  type="button"
+                  className="direct-gallery-reorder-btn"
+                  title="Move later"
+                  onClick={() => moveItem(i, 1)}
+                >
+                  <ChevronRight size={12} />
+                </button>
+              )}
+              <button
+                type="button"
+                className="direct-gallery-remove"
+                title="Remove picture"
+                onClick={() => removeAt(i)}
+              >
+                <X size={12} />
+              </button>
+            </div>
+            <span className="direct-gallery-sublabel">{getSlotDescription(i)}</span>
           </div>
         ))}
 
-        <button
-          type="button"
-          className="direct-gallery-add-btn"
-          onClick={() => inputRef.current?.click()}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader className="spin" size={20} />
-          ) : (
-            <>
-              <Plus size={20} />
-              <span>Add Images</span>
-            </>
-          )}
-        </button>
+        {!isFull && (
+          <button
+            type="button"
+            className="direct-gallery-add-btn"
+            onClick={() => inputRef.current?.click()}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader className="spin" size={20} />
+            ) : (
+              <>
+                <Plus size={20} />
+                <span>Add Picture ({MAX_GALLERY_IMAGES - values.length} remaining)</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

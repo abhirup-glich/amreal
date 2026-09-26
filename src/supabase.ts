@@ -130,23 +130,34 @@ export async function processDirectImageFile(file: File, maxWidth = 1400, qualit
 export const defaultBeforeAfterItems: DBBeforeAfter[] = [
   {
     id: 1,
-    title: "Collagen Biotin Treatment",
-    subtitle: "4-Week Salon Transformation",
-    before_image_url: "/assets/coffee-scalp-scrub.jpeg",
-    after_image_url: "/assets/hair-ritual.jpeg",
-    product_used: "Collagen Biotin Masque",
+    title: "Permanent Hair Spa: 3–5 Months Transformation",
+    subtitle: "One Ritual • Long-Lasting Smooth, Frizz-Free Manageability",
+    before_image_url: "/assets/permanent-spa-before-after.jpg",
+    after_image_url: "/assets/permanent-spa-result.jpg",
+    product_used: "AMREAL Permanent Hair Spa",
     sort_order: 1,
     visible: true,
     created_at: new Date().toISOString()
   },
   {
     id: 2,
-    title: "Scalp Detox & Renewal",
-    subtitle: "2-Week Intensive Routine",
-    before_image_url: "/assets/anti-hairfall-serum.jpeg",
+    title: "Coffee Scalp Scrub No. 2 Exfoliation",
+    subtitle: "Scalp Flake Reset & Root Purification",
+    before_image_url: "/assets/coffee-scrub-detail.jpg",
     after_image_url: "/assets/scalp-detox.jpeg",
-    product_used: "Coffee Scalp Scrub",
+    product_used: "AMREAL Coffee Scalp Scrub — No.2",
     sort_order: 2,
+    visible: true,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    title: "Silk Protein Collagen Therapy",
+    subtitle: "Extreme Frizz Elimination & Cashmere Softness",
+    before_image_url: "/assets/permanent-spa-texture.jpg",
+    after_image_url: "/assets/nanoplastia-treatment.jpg",
+    product_used: "Silk Protein Collagen Therapy",
+    sort_order: 3,
     visible: true,
     created_at: new Date().toISOString()
   }
@@ -174,8 +185,8 @@ function getInitialProducts(): DBProduct[] {
 
 // ─── Unified Data Layer (Supabase with Local Persistence Fallback) ────────────
 
-const PRODUCTS_STORAGE_KEY = "amreal_products_store";
-const BA_STORAGE_KEY = "amreal_ba_store";
+const PRODUCTS_STORAGE_KEY = "amreal_products_store_v3";
+const BA_STORAGE_KEY = "amreal_ba_store_v3";
 
 export async function loadProductsData(): Promise<DBProduct[]> {
   if (isSupabaseConfigured()) {

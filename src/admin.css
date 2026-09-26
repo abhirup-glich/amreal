@@ -686,7 +686,7 @@
   }
 }
 
-/* ─── Direct Gallery Uploader ────────────────────────────────────────────── */
+/* ─── Direct Gallery Uploader (Up to 5 Pictures & Result Slot) ─────────── */
 
 .direct-gallery-field {
   display: flex;
@@ -698,48 +698,135 @@
 .direct-gallery-count {
   font-size: 11px;
   color: var(--muted);
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--cream);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.direct-gallery-count.max-reached {
+  background: #F7EAEB;
+  color: #8C3E4C;
+  font-weight: 700;
+  border-color: rgba(140, 62, 76, 0.25);
 }
 
 .direct-gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 10px;
-  margin-top: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .direct-gallery-item {
   position: relative;
-  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
   border: 1px solid rgba(36, 33, 36, 0.12);
+  border-radius: 4px;
   overflow: hidden;
-  background: var(--cream);
+  background: #FAF6F4;
+  padding-bottom: 6px;
+  transition: all 0.2s ease;
 }
 
 .direct-gallery-item img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
+  display: block;
 }
 
-.direct-gallery-remove {
+.direct-gallery-item.is-result-slot {
+  border: 2px solid #8C3E4C;
+  box-shadow: 0 4px 16px rgba(140, 62, 76, 0.15);
+}
+
+.direct-gallery-slot-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 6px;
+  left: 6px;
+  background: rgba(30, 20, 24, 0.82);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 6px;
+  border-radius: 999px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.direct-gallery-item.is-result-slot .direct-gallery-slot-badge {
+  background: linear-gradient(135deg, #8C3E4C, #B86B77);
+  box-shadow: 0 2px 6px rgba(140, 62, 76, 0.35);
+}
+
+.direct-gallery-item-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.direct-gallery-reorder-btn {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(36, 33, 36, 0.82);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--charcoal);
+  padding: 0;
+  transition: all 0.18s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.direct-gallery-reorder-btn:hover {
+  background: #fff;
+  color: #8C3E4C;
+  transform: scale(1.1);
+}
+
+.direct-gallery-remove {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(36, 33, 36, 0.85);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
-  transition: background .15s;
+  padding: 0;
+  transition: background 0.15s, transform 0.18s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .direct-gallery-remove:hover {
   background: #c0392b;
+  transform: scale(1.1);
+}
+
+.direct-gallery-sublabel {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+  text-align: center;
+  font-weight: 600;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .direct-gallery-add-btn {
@@ -751,16 +838,26 @@
   gap: 6px;
   border: 2px dashed rgba(36, 33, 36, 0.22);
   background: #faf9f7;
+  border-radius: 4px;
   cursor: pointer;
   color: var(--muted);
   font-size: 11px;
   font-weight: 600;
-  transition: all .18s;
+  transition: all 0.2s;
+  padding: 8px;
+  text-align: center;
 }
 
-.direct-gallery-add-btn:hover {
-  border-color: var(--pink);
+.direct-gallery-add-btn:hover:not(:disabled) {
+  border-color: #8C3E4C;
   color: var(--charcoal);
   background: #fff;
+  transform: translateY(-1px);
 }
+
+.direct-gallery-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 
