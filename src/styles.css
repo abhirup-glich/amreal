@@ -764,8 +764,8 @@ img {
 .hero-stage-content {
   display: flex;
   flex-direction: column;
-  /* Content occupies roughly 55% of section width; image bleeds right */
-  max-width: 55%;
+  /* Content stays within padded container, image bleeds to screen edge */
+  max-width: 52%;
   z-index: 3;
   position: relative;
 }
@@ -998,14 +998,16 @@ img {
   font-weight: 800;
 }
 
-/* Right Stage Seamless Showcase - sticks to top, right, bottom edges of hero section */
+/* Right Stage Seamless Showcase
+   - Direct child of hero-luxury-stage (full-width section)
+   - position: absolute; right: 0 reaches the real viewport right edge
+   - z-index: 1 sits behind the text content (z-index: 3) */
 .hero-stage-showcase {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  /* Occupy the right ~48% of the section */
-  width: 48%;
+  width: 50%;
   z-index: 1;
   pointer-events: none;
 }
@@ -1047,19 +1049,24 @@ img {
   transform: scale(1.04);
 }
 
-/* Strong left fade that bleeds into the hero content area */
+/* Left fade — matches the actual hero section background so the blend is seamless.
+   The hero background is transparent, so it inherits the body gradient which is
+   white → light pink. We use the same pink-white tones to make the image dissolve
+   perfectly into the section. */
 .hero-left-fade-feather {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 55%;
+  /* Wide enough to dissolve fully before the text content ends */
+  width: 60%;
   background: linear-gradient(to right,
-    rgba(255, 248, 251, 1) 0%,
-    rgba(255, 245, 249, 0.92) 15%,
-    rgba(255, 242, 247, 0.7) 35%,
-    rgba(255, 240, 246, 0.3) 60%,
-    rgba(255, 238, 245, 0) 100%
+    #FFFDFE 0%,
+    rgba(255, 252, 253, 0.97) 10%,
+    rgba(255, 248, 251, 0.88) 28%,
+    rgba(255, 244, 249, 0.6) 50%,
+    rgba(255, 241, 247, 0.25) 70%,
+    rgba(255, 238, 246, 0) 100%
   );
   pointer-events: none;
   z-index: 3;

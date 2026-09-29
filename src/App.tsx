@@ -463,39 +463,38 @@ function Hero() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Right Column: Seamless Ultra-Premium Product Showcase */}
-        {/* Placed at right without separated box card, with soft left-side dissolve fade */}
-        <div className="hero-stage-showcase">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={index}
-              className={cx("hero-seamless-showcase", index === 0 && "is-lookbook")}
-              initial={{ opacity: 0, x: 26 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div className="hero-seamless-img-container">
-                <img
-                  src={slide.image}
-                  alt={slide.title}
-                  className="hero-seamless-img"
-                  style={{ objectPosition: index === 0 ? "center center" : "center top" }}
-                />
-                {/* Soft left edge dissolve feather */}
-                <div className="hero-left-fade-feather" aria-hidden="true" />
+      {/* Right side: Image bleeds to screen edge — outside the max-width container */}
+      <div className="hero-stage-showcase">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={index}
+            className={cx("hero-seamless-showcase", index === 0 && "is-lookbook")}
+            initial={{ opacity: 0, x: 26 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="hero-seamless-img-container">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="hero-seamless-img"
+                style={{ objectPosition: index === 0 ? "center center" : "center top" }}
+              />
+              {/* Left fade blends the image into the section background */}
+              <div className="hero-left-fade-feather" aria-hidden="true" />
+            </div>
+
+            {slide.badge && (
+              <div className="hero-showcase-badge">
+                <Star size={12} fill="currentColor" />
+                <span>{slide.badge}</span>
               </div>
-
-              {slide.badge && (
-                <div className="hero-showcase-badge">
-                  <Star size={12} fill="currentColor" />
-                  <span>{slide.badge}</span>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );
