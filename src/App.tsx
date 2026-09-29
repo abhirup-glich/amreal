@@ -397,11 +397,14 @@ function Hero() {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  // Auto-advance slides every 3 seconds (3000ms)
   useEffect(() => {
     if (isPaused) return;
-    const id = setInterval(() => setIndex(i => (i + 1) % heroSlides.length), 4800);
+    const id = setInterval(() => {
+      setIndex(i => (i + 1) % heroSlides.length);
+    }, 3000);
     return () => clearInterval(id);
-  }, [isPaused]);
+  }, [index, isPaused]);
 
   const slide = heroSlides[index];
 
@@ -411,8 +414,6 @@ function Hero() {
   return (
     <section
       className="hero-luxury-stage"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
       aria-label="AMREAL Featured Rituals"
     >
       {/* Hero Ambient Background Object: Dewy Pink Flower */}
@@ -429,10 +430,12 @@ function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.35 }}
               className="hero-stage-text-block"
             >
               <div className="hero-badge-pill">
+                <span className="hero-badge-index">0{index + 1} / 0{heroSlides.length}</span>
+                <span className="hero-badge-sep">•</span>
                 <Sparkles size={13} className="badge-sparkle" />
                 <span>{slide.eyebrow}</span>
               </div>
@@ -463,7 +466,11 @@ function Hero() {
 
           {/* Navigation Controls */}
           <div className="hero-stage-nav">
-            <div className="hero-arrows">
+            <div
+              className="hero-arrows"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               <button
                 type="button"
                 className="hero-arrow-btn"
@@ -484,7 +491,11 @@ function Hero() {
             <span className="hero-counter">
               <b>{String(index + 1).padStart(2, "0")}</b> / {String(heroSlides.length).padStart(2, "0")}
             </span>
-            <div className="hero-progress-bars">
+            <div
+              className="hero-progress-bars"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               {heroSlides.map((s, i) => (
                 <button
                   key={i}
@@ -492,8 +503,13 @@ function Hero() {
                   className={cx("hero-bar-item", i === index && "active")}
                   aria-label={`Go to slide ${i + 1}: ${s.title}`}
                 >
-                  <span className="bar-fill" />
-                  <span className="bar-label">{s.category || `0${i+1}`}</span>
+                  <span className="bar-fill">
+                    {i === index && <span key={`fill-${index}`} className="bar-fill-runner" />}
+                  </span>
+                  <div className="bar-item-meta">
+                    <span className="bar-num">0{i + 1}</span>
+                    <span className="bar-label">{s.category || `0${i+1}`}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -510,7 +526,7 @@ function Hero() {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.45 }}
+              transition={{ duration: 0.35 }}
             >
               <div className="hero-showcase-img-wrap">
                 <img
@@ -886,7 +902,9 @@ function Home() {
     <>
       <Navbar />
       <main>
-        <Hero /><Marquee />
+        <Hero />
+        <div className="hero-section-divider" aria-hidden="true" />
+        <Marquee />
         <Reveal>
           <section className="intro section">
             <div>

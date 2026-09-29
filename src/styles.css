@@ -684,9 +684,11 @@ img {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 60px 40px;
+  padding: 60px 40px 70px;
   overflow: hidden;
   background: transparent;
+  border-bottom: 2px solid rgba(232, 93, 147, 0.22);
+  box-shadow: 0 16px 40px -16px rgba(217, 77, 132, 0.12);
 }
 
 .hero-luxury-stage:before {
@@ -699,6 +701,20 @@ img {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(217, 77, 132, 0.12) 0%, transparent 70%);
   pointer-events: none;
+}
+
+.hero-section-divider {
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(217, 77, 132, 0.22) 20%, 
+    rgba(209, 160, 84, 0.45) 50%, 
+    rgba(217, 77, 132, 0.22) 80%, 
+    transparent 100%
+  );
+  position: relative;
+  z-index: 5;
 }
 
 /* Hero Ambient Background Objects: Silky Hair of Women, Blooming Flower, Petals */
@@ -764,6 +780,21 @@ img {
   margin-bottom: 20px;
   box-shadow: 0 4px 15px rgba(217, 77, 132, 0.08);
   width: fit-content;
+}
+
+.hero-badge-index {
+  background: linear-gradient(135deg, rgba(217, 77, 132, 0.12), rgba(209, 160, 84, 0.18));
+  color: var(--charcoal);
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.hero-badge-sep {
+  opacity: 0.35;
+  color: var(--rose);
 }
 
 .badge-sparkle {
@@ -877,40 +908,88 @@ img {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  background: none;
-  border: none;
-  padding: 0;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(217, 77, 132, 0.16);
+  border-radius: 8px;
+  padding: 6px 10px;
   cursor: pointer;
   text-align: left;
+  transition: all .25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.hero-bar-item:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(217, 77, 132, 0.38);
+  transform: translateY(-1px);
+}
+
+.hero-bar-item.active {
+  background: #FFFFFF;
+  border-color: rgba(217, 77, 132, 0.6);
+  box-shadow: 0 4px 14px rgba(217, 77, 132, 0.15);
 }
 
 .hero-bar-item .bar-fill {
-  height: 3px;
-  background: rgba(36, 33, 36, 0.12);
-  border-radius: 2px;
-  transition: background .25s ease;
+  height: 4px;
+  background: rgba(36, 33, 36, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
-.hero-bar-item.active .bar-fill {
-  background: linear-gradient(90deg, var(--rose) 0%, var(--gold) 100%);
+.hero-bar-item.active .bar-fill .bar-fill-runner {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #d94d84 0%, #d4a373 100%);
+  animation: hero3sProgress 3s linear forwards;
+}
+
+@keyframes hero3sProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.hero-bar-item .bar-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hero-bar-item .bar-num {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.hero-bar-item.active .bar-num {
+  color: var(--rose);
+  opacity: 1;
 }
 
 .hero-bar-item .bar-label {
-  font-size: 9px;
-  letter-spacing: .08em;
+  font-size: 9.5px;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80px;
 }
 
 .hero-bar-item.active .bar-label {
-  color: var(--rose);
+  color: var(--charcoal);
+  font-weight: 800;
 }
 
 /* Right Stage Product Showcase Card - 100% Unobstructed Product */
@@ -2649,6 +2728,21 @@ th {
 
 /* Tablet (max-width: 1050px) */
 @media (max-width: 1050px) {
+  .hero-luxury-stage {
+    padding: 45px 5vw 55px;
+    min-height: auto;
+  }
+  .hero-stage-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .hero-showcase-card {
+    height: 420px;
+    max-width: 100%;
+  }
+  .hero-progress-bars {
+    flex-wrap: wrap;
+  }
   .product-grid,
   .catalog-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -2926,6 +3020,23 @@ th {
 
 /* Small Mobile (max-width: 480px) */
 @media (max-width: 480px) {
+  .hero-stage-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .hero-progress-bars {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .hero-bar-item {
+    padding: 6px 8px;
+  }
+  .hero-showcase-card {
+    height: 320px;
+  }
   .announcement {
     height: 28px;
     min-height: 28px;
