@@ -80,34 +80,6 @@ function BrandLogo({ dark = false }: { dark?: boolean }) {
   );
 }
 
-function ThemeToggle() {
-  const [theme, setTheme] = useState<"light-pink" | "beige">(() => {
-    return (localStorage.getItem("amreal_theme") as "light-pink" | "beige") || "light-pink";
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("amreal_theme", theme);
-  }, [theme]);
-
-  const toggle = () => {
-    setTheme(t => (t === "light-pink" ? "beige" : "light-pink"));
-  };
-
-  return (
-    <button
-      type="button"
-      className="theme-switcher-btn"
-      onClick={toggle}
-      title={theme === "light-pink" ? "Switch to Classic Beige theme" : "Switch to Light Pink & Matt White theme"}
-      aria-label="Toggle Website Theme"
-    >
-      <span className="theme-dot" />
-      <span>{theme === "light-pink" ? "🌸 Light Pink Theme" : "🍂 Beige Theme"}</span>
-    </button>
-  );
-}
-
 function Announcement() {
   const statement = "Permanent Hair Spa. Formaldehyde-free. Odor- free. Smoke - free. Toxin - free, Sulfate- free, Paraben free.";
   const items = Array(6).fill(statement);
@@ -310,7 +282,6 @@ function Navbar() {
               <NavLink key={to} to={to} className={({ isActive }) => cx("nav-link", isActive && "active")}>{label}</NavLink>
             ))}
             <NavSearch />
-            <ThemeToggle />
             <Link className="button button-small" to="/contact">Enquire Now <ArrowRight size={15} /></Link>
           </nav>
           <button className="mobile-menu-button" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
@@ -326,9 +297,6 @@ function Navbar() {
             </div>
             <div className="mobile-search-section">
               <NavSearch onSelect={() => setOpen(false)} />
-            </div>
-            <div style={{ padding: "0 24px 14px", display: "flex", gap: "10px", alignItems: "center" }}>
-              <ThemeToggle />
             </div>
             <div className="mobile-links">
               {links.map(([label, to]) => (
