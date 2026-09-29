@@ -415,10 +415,7 @@ function Hero() {
       onMouseLeave={() => setIsPaused(false)}
       aria-label="AMREAL Featured Rituals"
     >
-      {/* Hero Ambient Background Objects: Silky Hair of Women & Dewy Pink Flower */}
-      <div className="hero-ambient-object hero-ambient-silky-hair" aria-hidden="true">
-        <img src="/assets/bg-silky-hair.png" alt="" />
-      </div>
+      {/* Hero Ambient Background Object: Dewy Pink Flower */}
       <div className="hero-ambient-object hero-ambient-flower" aria-hidden="true">
         <img src="/assets/bg-pink-flower.png" alt="" />
       </div>
@@ -625,10 +622,7 @@ function BeforeAfterSection({ items }: { items: DBBeforeAfter[] }) {
   if (!items.length) return null;
   return (
     <section className="section ba-section" id="results">
-      {/* Background Objects: Silky Hair Wave & Blooming Flower */}
-      <div className="ba-ambient-silky-hair" aria-hidden="true">
-        <img src="/assets/bg-silky-hair.png" alt="" />
-      </div>
+      {/* Background Object: Blooming Flower */}
       <div className="ba-ambient-flower" aria-hidden="true">
         <img src="/assets/bg-pink-flower.png" alt="" />
       </div>
@@ -722,10 +716,7 @@ function HeroHairSpaSection() {
 
   return (
     <section className="hero-spa-section" id="hero-spa">
-      {/* Background Objects: Silky Hair Wave & Blooming Flower */}
-      <div className="hero-spa-ambient-hair" aria-hidden="true">
-        <img src="/assets/bg-silky-hair.png" alt="" />
-      </div>
+      {/* Background Object: Blooming Flower */}
       <div className="hero-spa-ambient-flower" aria-hidden="true">
         <img src="/assets/bg-pink-flower.png" alt="" />
       </div>
@@ -2623,55 +2614,6 @@ function WhatsAppCornerButton() {
   );
 }
 
-// ─── Luxury Atmosphere Background (White-Pink Gradient, Petals, Flowers, Silky Hair) ─
-
-function LuxuryAtmosphereBackground() {
-  const petals = [
-    { id: 1, left: "4%", size: 30, dur: "18s", delay: "0s", img: "/assets/petal-1.png", swayDur: "4.5s", rot: 25 },
-    { id: 2, left: "13%", size: 22, dur: "22s", delay: "3.5s", img: "/assets/petal-2.png", swayDur: "5.2s", rot: -40 },
-    { id: 3, left: "23%", size: 26, dur: "19s", delay: "7.2s", img: "/assets/petal-3.png", swayDur: "4.8s", rot: 55 },
-    { id: 4, left: "33%", size: 20, dur: "25s", delay: "1.8s", img: "/assets/petal-1.png", swayDur: "6.0s", rot: -20 },
-    { id: 5, left: "44%", size: 28, dur: "20s", delay: "5.4s", img: "/assets/petal-2.png", swayDur: "5.0s", rot: 40 },
-    { id: 6, left: "55%", size: 24, dur: "23s", delay: "9.1s", img: "/assets/petal-3.png", swayDur: "4.2s", rot: -65 },
-    { id: 7, left: "67%", size: 32, dur: "17s", delay: "1.2s", img: "/assets/petal-1.png", swayDur: "5.5s", rot: 30 },
-    { id: 8, left: "77%", size: 20, dur: "26s", delay: "6.8s", img: "/assets/petal-2.png", swayDur: "4.7s", rot: -30 },
-    { id: 9, left: "86%", size: 28, dur: "21s", delay: "10.5s", img: "/assets/petal-3.png", swayDur: "5.8s", rot: 75 },
-    { id: 10, left: "94%", size: 22, dur: "24s", delay: "4.0s", img: "/assets/petal-1.png", swayDur: "5.3s", rot: -45 },
-    { id: 11, left: "18%", size: 24, dur: "27s", delay: "12.5s", img: "/assets/petal-2.png", swayDur: "6.1s", rot: 15 },
-    { id: 12, left: "48%", size: 34, dur: "19s", delay: "14.0s", img: "/assets/petal-3.png", swayDur: "4.6s", rot: -10 },
-    { id: 13, left: "72%", size: 26, dur: "22s", delay: "15.2s", img: "/assets/petal-1.png", swayDur: "5.4s", rot: 60 },
-    { id: 14, left: "91%", size: 19, dur: "25s", delay: "8.5s", img: "/assets/petal-2.png", swayDur: "4.9s", rot: -50 }
-  ];
-
-  return (
-    <div className="luxury-atmosphere-canvas" aria-hidden="true">
-      {/* ── Background Object: Floating Drifting Pink Petals Particle Stream ── */}
-      <div className="bg-petals-stream">
-        {petals.map(p => (
-          <div
-            key={p.id}
-            className="drifting-petal"
-            style={{
-              left: p.left,
-              animationDuration: `${p.dur}, ${p.swayDur}`,
-              animationDelay: `${p.delay}, ${p.delay}`,
-            }}
-          >
-            <img
-              src={p.img}
-              alt=""
-              style={{
-                width: `${p.size}px`,
-                transform: `rotate(${p.rot}deg)`,
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── Floating Salon Admin Quick Access Pill ──────────────────────────────────
 
 function FloatingAdminPill() {
@@ -2695,7 +2637,6 @@ function FloatingAdminPill() {
 export default function App() {
   return (
     <>
-      <LuxuryAtmosphereBackground />
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
