@@ -311,10 +311,6 @@ function Navbar() {
             ))}
             <NavSearch />
             <ThemeToggle />
-            <Link to="/admin" className="nav-admin-btn" title="AMREAL Salon Admin Portal">
-              <LayoutDashboard size={13} />
-              <span>Salon Admin</span>
-            </Link>
             <Link className="button button-small" to="/contact">Enquire Now <ArrowRight size={15} /></Link>
           </nav>
           <button className="mobile-menu-button" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
@@ -334,26 +330,10 @@ function Navbar() {
             <div style={{ padding: "0 24px 14px", display: "flex", gap: "10px", alignItems: "center" }}>
               <ThemeToggle />
             </div>
-            <div className="mobile-admin-callout">
-              <Link to="/admin" className="mobile-admin-card" onClick={() => setOpen(false)}>
-                <div className="mobile-admin-icon-wrap">
-                  <LayoutDashboard size={20} />
-                </div>
-                <div className="mobile-admin-info">
-                  <span className="mobile-admin-badge"><ShieldCheck size={11} /> SALON PORTAL</span>
-                  <strong>Salon Admin Panel</strong>
-                  <small>Manage products &amp; before/after gallery</small>
-                </div>
-                <ArrowRight size={16} className="mobile-admin-arrow" />
-              </Link>
-            </div>
             <div className="mobile-links">
               {links.map(([label, to]) => (
                 <Link key={to} to={to} onClick={() => setOpen(false)}>{label}<ArrowRight /></Link>
               ))}
-              <Link to="/admin" onClick={() => setOpen(false)} style={{ color: "var(--rose)", fontWeight: 600 }}>
-                Salon Admin Portal <ArrowRight />
-              </Link>
               <Link className="button" to="/contact" onClick={() => setOpen(false)}>Enquire Now <ArrowRight size={16} /></Link>
             </div>
           </motion.div>
@@ -397,12 +377,12 @@ function Hero() {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Auto-advance slides every 3 seconds (3000ms)
+  // Auto-advance slides every 5 seconds (5000ms)
   useEffect(() => {
     if (isPaused) return;
     const id = setInterval(() => {
       setIndex(i => (i + 1) % heroSlides.length);
-    }, 3000);
+    }, 5000);
     return () => clearInterval(id);
   }, [index, isPaused]);
 
@@ -516,24 +496,26 @@ function Hero() {
           </div>
         </div>
 
-        {/* Right Column: Unobstructed Product Showcase */}
-        {/* Crucial requirement: No dark gradient or text covering the product; true colours fully visible! */}
+        {/* Right Column: Seamless Ultra-Premium Product Showcase */}
+        {/* Placed at right without separated box card, with soft left-side dissolve fade */}
         <div className="hero-stage-showcase">
           <AnimatePresence mode="wait">
             <motion.div
               key={index}
-              className={cx("hero-showcase-card", index === 0 && "is-lookbook")}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.35 }}
+              className={cx("hero-seamless-showcase", index === 0 && "is-lookbook")}
+              initial={{ opacity: 0, x: 26 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="hero-showcase-img-wrap">
+              <div className="hero-seamless-img-container">
                 <img
                   src={slide.image}
                   alt={slide.title}
-                  className={cx("hero-showcase-img", index === 0 ? "img-cover" : "img-contain")}
+                  className={cx("hero-seamless-img", index === 0 ? "img-cover" : "img-contain")}
                 />
+                {/* Soft left edge dissolve feather */}
+                <div className="hero-left-fade-feather" aria-hidden="true" />
               </div>
 
               {slide.badge && (
@@ -906,7 +888,7 @@ function Home() {
         <div className="hero-section-divider" aria-hidden="true" />
         <Marquee />
         <Reveal>
-          <section className="intro section">
+          <section className="intro section pure-white">
             <div>
               <span className="eyebrow">AMREAL PROFESSIONAL</span>
               <h2>MORE THAN<br /><em>BEAUTY.</em></h2>
@@ -959,7 +941,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="section">
+        <section className="section pure-white">
           <SectionHeading eyebrow="DISCOVER AMREAL" title="PROFESSIONAL SOLUTIONS" text="Explore the current product list supplied for the AMREAL collection." />
           {loading ? (
             <div className="loading-state"><Loader className="spin" size={28} /><p>Loading products…</p></div>
@@ -1034,7 +1016,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="business section">
+        <section className="business section pure-white">
           <SectionHeading eyebrow="FOR PROFESSIONALS" title="CREATED FOR PROFESSIONALS." text="Built around the needs of modern beauty businesses." />
           <div className="business-grid">
             {["SALONS", "BEAUTY PROFESSIONALS", "SPAS", "RETAILERS", "DISTRIBUTORS"].map((x, i) => (
@@ -1684,13 +1666,10 @@ function Footer() {
           <Link to="/products">Products</Link>
           <Link to="/about">About</Link>
           <Link to="/feedback">Feedback</Link>
-          <Link to="/admin">Admin Portal</Link>
+          <Link to="/contact">Contact</Link>
         </div>
         <div>
           <span className="footer-title">Salon Professionals</span>
-          <Link to="/admin" className="footer-admin-link">
-            <LayoutDashboard size={13} /> Salon Admin Dashboard
-          </Link>
           <Link to="/contact">Business Enquiry</Link>
           <a href="mailto:hello@amrealprofessional.com">Email Us</a>
         </div>
@@ -2632,24 +2611,6 @@ function WhatsAppCornerButton() {
   );
 }
 
-// ─── Floating Salon Admin Quick Access Pill ──────────────────────────────────
-
-function FloatingAdminPill() {
-  const location = useLocation();
-  if (location.pathname.startsWith("/admin")) return null;
-  return (
-    <aside className="floating-admin-wrap" aria-label="Salon Management Quick Access">
-      <Link to="/admin" className="floating-admin-pill" title="AMREAL Salon Admin Portal">
-        <span className="floating-admin-icon">
-          <LayoutDashboard size={14} />
-        </span>
-        <span className="floating-admin-text">Salon Admin</span>
-        <span className="floating-admin-badge">PORTAL</span>
-      </Link>
-    </aside>
-  );
-}
-
 // ─── App Root ─────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -2667,7 +2628,6 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <WhatsAppCornerButton />
-      <FloatingAdminPill />
     </>
   );
 }

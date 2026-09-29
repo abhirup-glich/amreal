@@ -945,10 +945,10 @@ img {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #d94d84 0%, #d4a373 100%);
-  animation: hero3sProgress 3s linear forwards;
+  animation: hero5sProgress 5s linear forwards;
 }
 
-@keyframes hero3sProgress {
+@keyframes hero5sProgress {
   0% {
     width: 0%;
   }
@@ -992,78 +992,88 @@ img {
   font-weight: 800;
 }
 
-/* Right Stage Product Showcase Card - 100% Unobstructed Product */
+/* Right Stage Seamless Showcase - Placed at right, no separated boxed card border, with smooth fading in left */
 .hero-stage-showcase {
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
 }
 
-.hero-showcase-card {
+.hero-seamless-showcase {
+  position: relative;
   width: 100%;
-  max-width: 520px;
   height: 520px;
-  background: #FFFFFF;
-  border: 1px solid rgba(217, 77, 132, 0.16);
-  border-radius: 24px;
-  box-shadow: 0 24px 60px rgba(217, 77, 132, 0.09);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.hero-seamless-img-container {
   position: relative;
-  overflow: hidden;
-  padding: 30px;
-}
-
-.hero-showcase-card:before {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 45%;
-  background: radial-gradient(ellipse at 50% 100%, rgba(253, 237, 243, 0.8) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.hero-showcase-card.is-lookbook {
-  padding: 16px;
-}
-
-.hero-showcase-card.is-lookbook:before {
-  display: none;
-}
-
-.hero-showcase-img-wrap {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 2;
+  justify-content: flex-end;
+  overflow: visible;
+  /* CSS mask creates a soft, luxury dissolve / fade on the left side of the picture */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.2) 6%, rgba(0, 0, 0, 0.8) 18%, #000 32%, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.2) 6%, rgba(0, 0, 0, 0.8) 18%, #000 32%, #000 100%);
 }
 
-.hero-showcase-img {
-  max-height: 460px;
+.hero-seamless-img {
+  max-height: 520px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
-  transition: transform .4s ease;
-  filter: drop-shadow(0 15px 30px rgba(36, 33, 36, 0.12));
+  object-position: right center;
+  filter: drop-shadow(-14px 18px 36px rgba(36, 33, 36, 0.12));
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.hero-showcase-card:hover .hero-showcase-img {
-  transform: scale(1.03);
-}
-
-.hero-showcase-img.img-cover {
+.hero-seamless-img.img-cover {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 12px;
-  filter: drop-shadow(0 10px 24px rgba(217, 77, 132, 0.12));
+  max-width: 600px;
+  height: 490px;
+  object-fit: cover;
+  object-position: center right;
+  border-radius: 18px;
+  box-shadow: -12px 20px 48px rgba(217, 77, 132, 0.14);
+}
+
+.hero-seamless-showcase:hover .hero-seamless-img {
+  transform: scale(1.02);
+}
+
+.hero-left-fade-feather {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 140px;
+  background: linear-gradient(to right, 
+    rgba(255, 245, 248, 0.95) 0%, 
+    rgba(255, 245, 248, 0.35) 55%, 
+    rgba(255, 245, 248, 0) 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+[data-theme="beige"] .hero-left-fade-feather {
+  background: linear-gradient(to right, 
+    rgba(244, 239, 235, 0.95) 0%, 
+    rgba(244, 239, 235, 0.35) 55%, 
+    rgba(244, 239, 235, 0) 100%
+  );
 }
 
 .hero-showcase-badge {
@@ -1157,6 +1167,25 @@ img {
 
 [data-theme="beige"] .blush {
   background: linear-gradient(180deg, rgba(239, 224, 230, 0.85) 0%, rgba(244, 239, 235, 0.68) 100%);
+}
+
+/* Complete White Section Class */
+.pure-white,
+.section.pure-white,
+.section-white,
+.section.section-white {
+  background: #FFFFFF !important;
+  border-top: 1px solid rgba(217, 77, 132, 0.12);
+  border-bottom: 1px solid rgba(217, 77, 132, 0.12);
+  position: relative;
+  z-index: 2;
+}
+
+[data-theme="beige"] .pure-white,
+[data-theme="beige"] .section.pure-white,
+[data-theme="beige"] .section-white,
+[data-theme="beige"] .section.section-white {
+  background: #FFFFFF !important;
 }
 
 .section-heading {
@@ -2736,9 +2765,16 @@ th {
     grid-template-columns: 1fr;
     gap: 40px;
   }
-  .hero-showcase-card {
+  .hero-seamless-showcase {
     height: 420px;
-    max-width: 100%;
+    justify-content: center;
+  }
+  .hero-seamless-img-container {
+    justify-content: center;
+  }
+  .hero-seamless-img {
+    max-height: 400px;
+    object-position: center;
   }
   .hero-progress-bars {
     flex-wrap: wrap;
@@ -3034,8 +3070,14 @@ th {
   .hero-bar-item {
     padding: 6px 8px;
   }
-  .hero-showcase-card {
-    height: 320px;
+  .hero-seamless-showcase {
+    height: 330px;
+  }
+  .hero-seamless-img {
+    max-height: 310px;
+  }
+  .hero-left-fade-feather {
+    width: 60px;
   }
   .announcement {
     height: 28px;
@@ -3332,9 +3374,7 @@ th {
 
 .hero-spa-section {
   padding: 85px 40px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(254, 238, 246, 0.52) 50%, rgba(255, 255, 255, 0.72) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #FFFFFF !important;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   position: relative;
