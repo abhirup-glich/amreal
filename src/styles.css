@@ -684,7 +684,6 @@ img {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 60px 40px 70px;
   overflow: hidden;
   background: transparent;
   border-bottom: 2px solid rgba(232, 93, 147, 0.22);
@@ -751,17 +750,24 @@ img {
   max-width: 1320px;
   margin: 0 auto;
   width: 100%;
+  /* Use padding instead of section padding so image can break out */
+  padding: 60px 40px 70px;
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 60px;
+  /* Left content takes its natural space; right col is absolute so give it 0 */
+  grid-template-columns: 1fr;
   align-items: center;
   position: relative;
   z-index: 2;
+  min-height: inherit;
 }
 
 .hero-stage-content {
   display: flex;
   flex-direction: column;
+  /* Content occupies roughly 55% of section width; image bleeds right */
+  max-width: 55%;
+  z-index: 3;
+  position: relative;
 }
 
 .hero-badge-pill {
@@ -992,77 +998,77 @@ img {
   font-weight: 800;
 }
 
-/* Right Stage Seamless Showcase - Placed at right, no separated boxed card border, with smooth fading in left */
+/* Right Stage Seamless Showcase - sticks to top, right, bottom edges of hero section */
 .hero-stage-showcase {
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  min-height: 520px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  /* Occupy the right ~48% of the section */
+  width: 48%;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .hero-seamless-showcase {
   position: relative;
   width: 100%;
-  height: 520px;
+  height: 100%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
   background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: none;
+  pointer-events: auto;
 }
 
 .hero-seamless-img-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
-  overflow: visible;
-  /* CSS mask creates a soft, luxury dissolve / fade on the left side of the picture */
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.2) 6%, rgba(0, 0, 0, 0.8) 18%, #000 32%, #000 100%);
-  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.2) 6%, rgba(0, 0, 0, 0.8) 18%, #000 32%, #000 100%);
+  overflow: hidden;
 }
 
 .hero-seamless-img {
-  max-height: 520px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-  object-position: right center;
-  filter: drop-shadow(-14px 18px 36px rgba(36, 33, 36, 0.12));
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center right;
+  filter: none;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
 }
 
 .hero-seamless-img.img-cover {
   width: 100%;
-  max-width: 600px;
-  height: 490px;
+  height: 100%;
   object-fit: cover;
   object-position: center right;
-  border-radius: 18px;
-  box-shadow: -12px 20px 48px rgba(217, 77, 132, 0.14);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .hero-seamless-showcase:hover .hero-seamless-img {
-  transform: scale(1.02);
+  transform: scale(1.03);
 }
 
+/* Strong left fade that bleeds into the hero content area */
 .hero-left-fade-feather {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 140px;
-  background: linear-gradient(to right, 
-    rgba(255, 245, 248, 0.95) 0%, 
-    rgba(255, 245, 248, 0.35) 55%, 
-    rgba(255, 245, 248, 0) 100%
+  width: 55%;
+  background: linear-gradient(to right,
+    rgba(255, 248, 251, 1) 0%,
+    rgba(255, 245, 249, 0.92) 15%,
+    rgba(255, 242, 247, 0.7) 35%,
+    rgba(255, 240, 246, 0.3) 60%,
+    rgba(255, 238, 245, 0) 100%
   );
   pointer-events: none;
   z-index: 3;
@@ -2770,23 +2776,23 @@ th {
 /* Tablet (max-width: 1050px) */
 @media (max-width: 1050px) {
   .hero-luxury-stage {
-    padding: 45px 5vw 55px;
     min-height: auto;
+    min-height: 100vh;
   }
   .hero-stage-container {
     grid-template-columns: 1fr;
-    gap: 40px;
+    padding: 55px 5vw 65px;
+    min-height: 100vh;
   }
-  .hero-seamless-showcase {
-    height: 420px;
-    justify-content: center;
+  .hero-stage-content {
+    max-width: 72%;
   }
-  .hero-seamless-img-container {
-    justify-content: center;
+  /* On tablet, image is still absolute right/top/bottom but narrower */
+  .hero-stage-showcase {
+    width: 52%;
   }
-  .hero-seamless-img {
-    max-height: 400px;
-    object-position: center;
+  .hero-left-fade-feather {
+    width: 70%;
   }
   .hero-progress-bars {
     flex-wrap: wrap;
@@ -2858,6 +2864,30 @@ th {
   }
   .hero {
     min-height: 640px;
+  }
+  /* Mobile: hero image goes full bleed, content readable on top */
+  .hero-luxury-stage {
+    min-height: 100svh;
+  }
+  .hero-stage-container {
+    padding: 48px 6vw 60px;
+    min-height: 100svh;
+  }
+  .hero-stage-content {
+    max-width: 100%;
+  }
+  .hero-stage-showcase {
+    width: 100%;
+    opacity: 0.2;
+  }
+  .hero-left-fade-feather {
+    width: 100%;
+    background: linear-gradient(to right,
+      rgba(255, 248, 251, 0.98) 0%,
+      rgba(255, 245, 249, 0.9) 50%,
+      rgba(255, 242, 247, 0.6) 80%,
+      rgba(255, 240, 246, 0.15) 100%
+    );
   }
   .hero-content {
     left: 6vw;
