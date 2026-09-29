@@ -6,7 +6,7 @@ import {
   Instagram, Mail, Phone, MapPin, Check, Star,
   Plus, Trash2, Eye, EyeOff, Edit3, Save, Upload,
   LayoutDashboard, Package, ImageIcon, LogOut, AlertCircle, Loader,
-  FolderOpen, Sparkles, ArrowLeftRight, FlaskConical
+  FolderOpen, Sparkles, ArrowLeftRight, FlaskConical, ShieldCheck
 } from "lucide-react";
 import { categories as staticCategories, concerns, hairTypes, heroSlides, products as staticProducts, Product } from "./data";
 import { IngredientBadge, INGREDIENT_META } from "./ingredientIcons";
@@ -80,10 +80,39 @@ function BrandLogo({ dark = false }: { dark?: boolean }) {
   );
 }
 
-function Announcement() {
-  const items = Array(12).fill("AMREAL PROFESSIONALS");
+function ThemeToggle() {
+  const [theme, setTheme] = useState<"light-pink" | "beige">(() => {
+    return (localStorage.getItem("amreal_theme") as "light-pink" | "beige") || "light-pink";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("amreal_theme", theme);
+  }, [theme]);
+
+  const toggle = () => {
+    setTheme(t => (t === "light-pink" ? "beige" : "light-pink"));
+  };
+
   return (
-    <div className="announcement" aria-label="AMREAL PROFESSIONALS">
+    <button
+      type="button"
+      className="theme-switcher-btn"
+      onClick={toggle}
+      title={theme === "light-pink" ? "Switch to Classic Beige theme" : "Switch to Light Pink & Matt White theme"}
+      aria-label="Toggle Website Theme"
+    >
+      <span className="theme-dot" />
+      <span>{theme === "light-pink" ? "🌸 Light Pink Theme" : "🍂 Beige Theme"}</span>
+    </button>
+  );
+}
+
+function Announcement() {
+  const statement = "Permanent Hair Spa. Formaldehyde-free. Odor- free. Smoke - free. Toxin - free, Sulfate- free, Paraben free.";
+  const items = Array(6).fill(statement);
+  return (
+    <div className="announcement" aria-label="AMREAL Product Standards">
       <div className="announcement-track">
         <div className="announcement-group">
           {items.map((text, i) => (
@@ -281,31 +310,55 @@ function Navbar() {
               <NavLink key={to} to={to} className={({ isActive }) => cx("nav-link", isActive && "active")}>{label}</NavLink>
             ))}
             <NavSearch />
+            <ThemeToggle />
+            <Link to="/admin" className="nav-admin-btn" title="AMREAL Salon Admin Portal">
+              <LayoutDashboard size={13} />
+              <span>Salon Admin</span>
+            </Link>
             <Link className="button button-small" to="/contact">Enquire Now <ArrowRight size={15} /></Link>
           </nav>
           <button className="mobile-menu-button" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
-          <AnimatePresence>
-            {open && (
-              <motion.div className="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="mobile-menu-top">
-                  <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
-                  <button onClick={() => setOpen(false)} aria-label="Close menu"><X size={20} /></button>
-                </div>
-                <div className="mobile-search-section">
-                  <NavSearch onSelect={() => setOpen(false)} />
-                </div>
-                <div className="mobile-links">
-                  {links.map(([label, to]) => (
-                    <Link key={to} to={to} onClick={() => setOpen(false)}>{label}<ArrowRight /></Link>
-                  ))}
-                  <Link className="button" to="/contact" onClick={() => setOpen(false)}>Enquire Now <ArrowRight size={16} /></Link>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </header>
       </div>
       <div className="site-header-spacer" aria-hidden="true" />
+      <AnimatePresence>
+        {open && (
+          <motion.div className="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="mobile-menu-top">
+              <Link className="logo" to="/" onClick={() => setOpen(false)}><BrandLogo /></Link>
+              <button onClick={() => setOpen(false)} aria-label="Close menu"><X size={20} /></button>
+            </div>
+            <div className="mobile-search-section">
+              <NavSearch onSelect={() => setOpen(false)} />
+            </div>
+            <div style={{ padding: "0 24px 14px", display: "flex", gap: "10px", alignItems: "center" }}>
+              <ThemeToggle />
+            </div>
+            <div className="mobile-admin-callout">
+              <Link to="/admin" className="mobile-admin-card" onClick={() => setOpen(false)}>
+                <div className="mobile-admin-icon-wrap">
+                  <LayoutDashboard size={20} />
+                </div>
+                <div className="mobile-admin-info">
+                  <span className="mobile-admin-badge"><ShieldCheck size={11} /> SALON PORTAL</span>
+                  <strong>Salon Admin Panel</strong>
+                  <small>Manage products &amp; before/after gallery</small>
+                </div>
+                <ArrowRight size={16} className="mobile-admin-arrow" />
+              </Link>
+            </div>
+            <div className="mobile-links">
+              {links.map(([label, to]) => (
+                <Link key={to} to={to} onClick={() => setOpen(false)}>{label}<ArrowRight /></Link>
+              ))}
+              <Link to="/admin" onClick={() => setOpen(false)} style={{ color: "var(--rose)", fontWeight: 600 }}>
+                Salon Admin Portal <ArrowRight />
+              </Link>
+              <Link className="button" to="/contact" onClick={() => setOpen(false)}>Enquire Now <ArrowRight size={16} /></Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
@@ -342,43 +395,142 @@ function Reveal({ children, className = "" }: { children: React.ReactNode; class
 
 function Hero() {
   const [index, setIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
   useEffect(() => {
-    const id = setInterval(() => setIndex(i => (i + 1) % heroSlides.length), 3200);
+    if (isPaused) return;
+    const id = setInterval(() => setIndex(i => (i + 1) % heroSlides.length), 4800);
     return () => clearInterval(id);
-  }, []);
+  }, [isPaused]);
+
   const slide = heroSlides[index];
+
+  const nextSlide = () => setIndex((index + 1) % heroSlides.length);
+  const prevSlide = () => setIndex((index - 1 + heroSlides.length) % heroSlides.length);
+
   return (
-    <section className="hero">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={index}
-          className="hero-image"
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.01 }}
-          transition={{ duration: .9 }}
-          style={{ backgroundImage: `linear-gradient(90deg, rgba(25,18,20,.58), rgba(25,18,20,.12) 65%, rgba(25,18,20,.02)), url(${slide.image})` }}
-        />
-      </AnimatePresence>
-      <div className="hero-content">
-        <AnimatePresence mode="wait">
-          <motion.div key={index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: .6 }}>
-            <span className="eyebrow hero-eyebrow">{slide.eyebrow}</span>
-            <h1>{slide.title}</h1>
-            <p>{slide.text}</p>
-            <div className="hero-actions">
-              <Button to="/products">Explore Products</Button>
-              <Button to="/contact" secondary>Partner with AMREAL</Button>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+    <section
+      className="hero-luxury-stage"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      aria-label="AMREAL Featured Rituals"
+    >
+      {/* Hero Ambient Background Objects: Silky Hair of Women & Dewy Pink Flower */}
+      <div className="hero-ambient-object hero-ambient-silky-hair" aria-hidden="true">
+        <img src="/assets/bg-silky-hair.png" alt="" />
       </div>
-      <div className="hero-controls">
-        <span>{String(index + 1).padStart(2, "0")} / 05</span>
-        <div className="hero-progress">
-          {heroSlides.map((_, i) => (
-            <button key={i} onClick={() => setIndex(i)} className={i === index ? "active" : ""}><span /></button>
-          ))}
+      <div className="hero-ambient-object hero-ambient-flower" aria-hidden="true">
+        <img src="/assets/bg-pink-flower.png" alt="" />
+      </div>
+
+      <div className="hero-stage-container">
+        {/* Left Column: Regal Typography & Narrative */}
+        <div className="hero-stage-content">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.4 }}
+              className="hero-stage-text-block"
+            >
+              <div className="hero-badge-pill">
+                <Sparkles size={13} className="badge-sparkle" />
+                <span>{slide.eyebrow}</span>
+              </div>
+              <h1 className="hero-stage-title">{slide.title}</h1>
+              <p className="hero-stage-desc">{slide.text}</p>
+
+              {slide.highlights && (
+                <div className="hero-highlight-chips">
+                  {slide.highlights.map((h, i) => (
+                    <span key={i} className="hero-chip">
+                      <Check size={11} className="chip-check" />
+                      {h}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="hero-actions">
+                <Button to={slide.link || "/products"}>
+                  {index === 0 ? "Explore Catalog Lookbook" : "Explore Ritual"}
+                </Button>
+                <Button to="/contact" secondary>
+                  Salon Partnership
+                </Button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation Controls */}
+          <div className="hero-stage-nav">
+            <div className="hero-arrows">
+              <button
+                type="button"
+                className="hero-arrow-btn"
+                onClick={prevSlide}
+                aria-label="Previous Slide"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                className="hero-arrow-btn"
+                onClick={nextSlide}
+                aria-label="Next Slide"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+            <span className="hero-counter">
+              <b>{String(index + 1).padStart(2, "0")}</b> / {String(heroSlides.length).padStart(2, "0")}
+            </span>
+            <div className="hero-progress-bars">
+              {heroSlides.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => setIndex(i)}
+                  className={cx("hero-bar-item", i === index && "active")}
+                  aria-label={`Go to slide ${i + 1}: ${s.title}`}
+                >
+                  <span className="bar-fill" />
+                  <span className="bar-label">{s.category || `0${i+1}`}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Unobstructed Product Showcase */}
+        {/* Crucial requirement: No dark gradient or text covering the product; true colours fully visible! */}
+        <div className="hero-stage-showcase">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={index}
+              className={cx("hero-showcase-card", index === 0 && "is-lookbook")}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.45 }}
+            >
+              <div className="hero-showcase-img-wrap">
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  className={cx("hero-showcase-img", index === 0 ? "img-cover" : "img-contain")}
+                />
+              </div>
+
+              {slide.badge && (
+                <div className="hero-showcase-badge">
+                  <Star size={12} fill="currentColor" />
+                  <span>{slide.badge}</span>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </section>
@@ -473,10 +625,18 @@ function BeforeAfterSection({ items }: { items: DBBeforeAfter[] }) {
   if (!items.length) return null;
   return (
     <section className="section ba-section" id="results">
+      {/* Background Objects: Silky Hair Wave & Blooming Flower */}
+      <div className="ba-ambient-silky-hair" aria-hidden="true">
+        <img src="/assets/bg-silky-hair.png" alt="" />
+      </div>
+      <div className="ba-ambient-flower" aria-hidden="true">
+        <img src="/assets/bg-pink-flower.png" alt="" />
+      </div>
+
       <SectionHeading eyebrow="REAL RESULTS" title="SEE THE TRANSFORMATION" text="Slide to reveal the before and after results of AMREAL Professional treatments." />
       <div className="ba-wrapper">
         <div className="ba-main">
-          <BeforeAfterSlider item={items[active]} />
+          <BeforeAfterSlider item={items[active]} showInfo={false} />
         </div>
         {items.length > 1 && (
           <div className="ba-thumbs">
@@ -541,17 +701,35 @@ function ProductCard({ product }: { product: Product }) {
 
 function HeroHairSpaSection() {
   const spaImages = [
-    { url: "/assets/hair-ritual.jpeg", label: "Packaging", caption: "AMREAL Permanent Hair Spa — 1000 ml Professional Format" },
-    { url: "/assets/permanent-spa-before-after.jpg", label: "Before & After", caption: "Instant In-Salon Transformation • Smooth & Frizz-Free" },
-    { url: "/assets/permanent-spa-result.jpg", label: "2 Months After", caption: "Long-Lasting Results • Sleek, Manageable Hair Retained for 3–5 Months" },
-    { url: "/assets/permanent-spa-texture.jpg", label: "Luxe Texture", caption: "Concentrated Collagen & Keratin Fibre Conditioning Formula" },
-    { url: "/assets/permanent-spa-lifestyle.jpg", label: "Salon Ritual", caption: "One Professional Ritual • Customized for All Hair Types" }
+    { url: "/assets/permanent-spa-hero-bottle.jpg", label: "Hero Pack", caption: "AMREAL Permanent Hair Spa — 1000 ml Professional Salon Format" },
+    { url: "/assets/permanent-spa-split-before-after.jpg", label: "Before & After", caption: "Instant In-Salon Transformation • Smooth & Frizz-Free" },
+    { url: "/assets/permanent-spa-model-before.jpg", label: "Before Treatment", caption: "Natural Curly / Frizzy Hair Condition Before Ritual" },
+    { url: "/assets/permanent-spa-model-after.jpg", label: "Immediately After", caption: "Directly After Permanent Spa Ritual (Smooth Without Blowdry)" },
+    { url: "/assets/permanent-spa-lifestyle.jpg", label: "2 Months After", caption: "Longevity Retention • Sleek, Manageable Hair Retained for 3–4 Months" },
+    { url: "/assets/permanent-spa-salon-ritual.jpg", label: "Salon Ritual", caption: "One Professional Ritual • Backbar Application Protocol" },
+    { url: "/assets/hair-fibre-repair-diagram.jpg", label: "Fibre Science", caption: "Deep Cuticle Alignment & Structural Moisture Lock" }
   ];
 
   const [activeIdx, setActiveIdx] = useState(0);
+  const [activeTimeline, setActiveTimeline] = useState<"before" | "after" | "2months">("after");
+
+  const setTimeline = (t: "before" | "after" | "2months") => {
+    setActiveTimeline(t);
+    if (t === "before") setActiveIdx(2); // Before Treatment
+    if (t === "after") setActiveIdx(3); // Immediately After Without Blowdry
+    if (t === "2months") setActiveIdx(4); // 2 Months After Retention
+  };
 
   return (
     <section className="hero-spa-section" id="hero-spa">
+      {/* Background Objects: Silky Hair Wave & Blooming Flower */}
+      <div className="hero-spa-ambient-hair" aria-hidden="true">
+        <img src="/assets/bg-silky-hair.png" alt="" />
+      </div>
+      <div className="hero-spa-ambient-flower" aria-hidden="true">
+        <img src="/assets/bg-pink-flower.png" alt="" />
+      </div>
+
       <div className="hero-spa-container">
         <div className="hero-spa-gallery">
           <div className="hero-spa-main-pic">
@@ -565,12 +743,47 @@ function HeroHairSpaSection() {
               <p>{spaImages[activeIdx].caption}</p>
             </div>
           </div>
+
+          {/* Interactive Timeline Switcher: After - Before - 2 months after */}
+          <div className="hero-spa-timeline-box">
+            <span className="hero-spa-timeline-title">TRANSFORMATION TIMELINE:</span>
+            <div className="hero-spa-timeline-tabs">
+              <button
+                type="button"
+                className={cx("hero-spa-timeline-tab", activeTimeline === "before" && "active")}
+                onClick={() => setTimeline("before")}
+              >
+                1. Before Treatment
+              </button>
+              <button
+                type="button"
+                className={cx("hero-spa-timeline-tab", activeTimeline === "after" && "active")}
+                onClick={() => setTimeline("after")}
+              >
+                2. Immediately After
+              </button>
+              <button
+                type="button"
+                className={cx("hero-spa-timeline-tab", activeTimeline === "2months" && "active")}
+                onClick={() => setTimeline("2months")}
+              >
+                3. 2 Months After ✨
+              </button>
+            </div>
+          </div>
+
+          {/* Justhuman-Style Multi-Thumbnail Gallery */}
           <div className="hero-spa-thumbs">
             {spaImages.map((img, i) => (
               <button
                 key={i}
                 className={cx("hero-spa-thumb", i === activeIdx && "active")}
-                onClick={() => setActiveIdx(i)}
+                onClick={() => {
+                  setActiveIdx(i);
+                  if (i === 2) setActiveTimeline("before");
+                  else if (i === 3 || i === 1) setActiveTimeline("after");
+                  else if (i === 4) setActiveTimeline("2months");
+                }}
                 aria-label={`View ${img.label}`}
               >
                 <img src={img.url} alt="" />
@@ -581,19 +794,19 @@ function HeroHairSpaSection() {
         </div>
 
         <div className="hero-spa-info">
-          <span className="hero-spa-eyebrow">OUR FLAGSHIP HERO RITUAL</span>
+          <span className="hero-spa-eyebrow">OUR FLAGSHIP HERO RITUAL • FORMALDEHYDE-FREE</span>
           <h2>MORE THAN A<br /><em>HAIR SPA.</em></h2>
 
           <div className="hero-spa-highlight">
             <div className="hero-spa-highlight-lead">
-              <span>3–5 MONTHS</span> OF SMOOTHER, MORE MANAGEABLE HAIR.
+              <span>3–4 MONTHS OF LONGEVITY RETENTION</span>, BLOW-DRIED LOOKS.
             </div>
             <p className="hero-spa-highlight-sub">
-              ONE RITUAL. LONG-LASTING RESULTS.
+              MORE THAN A HAIR SPA • 3–5 MONTHS OF SMOOTHER, MORE MANAGEABLE HAIR. ONE RITUAL. LONG-LASTING RESULTS.
             </p>
           </div>
 
-          {/* Clinical Metrics Infogram */}
+          {/* Clinical Metrics Infogram with Effortless Blow-Dry */}
           <ClinicalMetricsGram />
 
           <div className="hero-spa-ingredients-title">
@@ -829,10 +1042,17 @@ function Home() {
         <section className="social section blush">
           <SectionHeading eyebrow="SOCIAL" title="FOLLOW THE AMREAL JOURNEY" text="Explore AMREAL professional treatments and results." />
           <div className="social-grid">
-            {["collagen-biotin-masque.jpeg", "coffee-scalp-scrub.jpeg", "hair-ritual.jpeg", "scalp-detox.jpeg", "anti-hairfall-serum.jpeg", "collagen-biotin-masque.jpeg"].map((file, i) => (
-              <a href="#" onClick={e => e.preventDefault()} key={`${file}-${i}`} className="social-card">
-                <img src={`/assets/${file}`} alt="AMREAL Professional" />
-                <span><Instagram size={18} /> View Post</span>
+            {[
+              { file: "permanent-spa-salon-ritual.jpg", label: "In-Salon Hair Ritual" },
+              { file: "permanent-spa-split-before-after.jpg", label: "Before & After Results" },
+              { file: "amreal-catalog-girls-cover.png", label: "Lookbook Collection" },
+              { file: "permanent-spa-lifestyle.jpg", label: "2 Months Longevity" },
+              { file: "permanent-spa-hero-bottle.jpg", label: "Permanent Hair Spa" },
+              { file: "coffee-scalp-scrub.jpeg", label: "Scalp Exfoliation" }
+            ].map((item, i) => (
+              <a href="#" onClick={e => e.preventDefault()} key={`${item.file}-${i}`} className="social-card">
+                <img src={`/assets/${item.file}`} alt={item.label} />
+                <span><Instagram size={18} /> {item.label}</span>
               </a>
             ))}
           </div>
@@ -938,7 +1158,7 @@ function ProductsPage() {
 
 // ─── Product Detail ───────────────────────────────────────────────────────────
 
-function getProductSliderItem(product: Product, gallery: string[]): DBBeforeAfter {
+function getProductSliderItem(product: Product, _gallery: string[]): DBBeforeAfter {
   const nameLower = product.name.toLowerCase();
   const slugLower = product.slug.toLowerCase();
 
@@ -946,24 +1166,11 @@ function getProductSliderItem(product: Product, gallery: string[]): DBBeforeAfte
     return {
       id: 1,
       title: "Permanent Hair Spa Transformation",
-      subtitle: "One Ritual • 3–5 Months Smoothness & Frizz-Free Manageability",
-      before_image_url: "/assets/permanent-spa-before-after.jpg",
-      after_image_url: "/assets/permanent-spa-result.jpg",
+      subtitle: "One Ritual • Instant Smoothness & Frizz-Free Manageability (Without Blowdry)",
+      before_image_url: "/assets/permanent-spa-model-before.jpg",
+      after_image_url: "/assets/permanent-spa-model-after.jpg",
       product_used: "AMREAL Permanent Hair Spa (1000 ml)",
       sort_order: 1,
-      visible: true,
-      created_at: new Date().toISOString()
-    };
-  }
-  if (slugLower.includes("coffee") || slugLower.includes("scrub") || nameLower.includes("scrub")) {
-    return {
-      id: 2,
-      title: "Coffee Scalp Scrub No. 2 Exfoliation",
-      subtitle: "Flake Elimination & Root Purification Result",
-      before_image_url: "/assets/coffee-scrub-detail.jpg",
-      after_image_url: "/assets/scalp-detox.jpeg",
-      product_used: "AMREAL Coffee Scalp Scrub — No.2",
-      sort_order: 2,
       visible: true,
       created_at: new Date().toISOString()
     };
@@ -972,9 +1179,9 @@ function getProductSliderItem(product: Product, gallery: string[]): DBBeforeAfte
     return {
       id: 3,
       title: "Silk Protein Collagen Therapy",
-      subtitle: "Intense Frizz Elimination & Mirror Silkiness",
-      before_image_url: "/assets/permanent-spa-texture.jpg",
-      after_image_url: "/assets/nanoplastia-treatment.jpg",
+      subtitle: "Intense Cuticle Realignment & Silky Softness",
+      before_image_url: "/assets/permanent-spa-model-before.jpg",
+      after_image_url: "/assets/permanent-spa-model-after.jpg",
       product_used: "Silk Protein Collagen Therapy",
       sort_order: 3,
       visible: true,
@@ -986,23 +1193,10 @@ function getProductSliderItem(product: Product, gallery: string[]): DBBeforeAfte
       id: 4,
       title: "Nanoplastia Fibre Realignment",
       subtitle: "Deep Amino Acid Alignment & Mirror Gloss",
-      before_image_url: "/assets/permanent-spa-before-after.jpg",
-      after_image_url: "/assets/nanoplastia-treatment.jpg",
+      before_image_url: "/assets/permanent-spa-model-before.jpg",
+      after_image_url: "/assets/permanent-spa-model-after.jpg",
       product_used: "AMREAL Nanoplastia Treatment",
       sort_order: 4,
-      visible: true,
-      created_at: new Date().toISOString()
-    };
-  }
-  if (slugLower.includes("tonic") || slugLower.includes("hairfall") || nameLower.includes("hairfall")) {
-    return {
-      id: 5,
-      title: "Anti-Hairfall Follicle Vitality",
-      subtitle: "Targeted Scalp & DHT-Pathway Follicle Density",
-      before_image_url: "/assets/anti-hairfall-tonic-lifestyle.jpg",
-      after_image_url: "/assets/anti-hairfall-serum.jpeg",
-      product_used: "AMREAL Anti-Hairfall Scalp Tonic",
-      sort_order: 5,
       visible: true,
       created_at: new Date().toISOString()
     };
@@ -1012,8 +1206,8 @@ function getProductSliderItem(product: Product, gallery: string[]): DBBeforeAfte
       id: 6,
       title: "Collagen Plex Biotin Masque Recovery",
       subtitle: "Restorative Fibre Repair & Cuticle Realignment",
-      before_image_url: "/assets/permanent-spa-before-after.jpg",
-      after_image_url: "/assets/permanent-spa-result.jpg",
+      before_image_url: "/assets/permanent-spa-model-before.jpg",
+      after_image_url: "/assets/permanent-spa-model-after.jpg",
       product_used: product.name,
       sort_order: 6,
       visible: true,
@@ -1023,9 +1217,9 @@ function getProductSliderItem(product: Product, gallery: string[]): DBBeforeAfte
   return {
     id: 99,
     title: `${product.name} Transformation Result`,
-    subtitle: "Before & After Clinical Comparison",
-    before_image_url: gallery[1] || "/assets/permanent-spa-before-after.jpg",
-    after_image_url: gallery[2] || gallery[0] || "/assets/permanent-spa-result.jpg",
+    subtitle: "Real In-Salon Client Results • Before & After",
+    before_image_url: "/assets/permanent-spa-model-before.jpg",
+    after_image_url: "/assets/permanent-spa-model-after.jpg",
     product_used: product.name,
     sort_order: 99,
     visible: true,
@@ -1481,17 +1675,20 @@ function Footer() {
           <Link to="/products">Products</Link>
           <Link to="/about">About</Link>
           <Link to="/feedback">Feedback</Link>
-          <Link to="/admin">Admin</Link>
+          <Link to="/admin">Admin Portal</Link>
         </div>
         <div>
-          <span className="footer-title">Connect</span>
+          <span className="footer-title">Salon Professionals</span>
+          <Link to="/admin" className="footer-admin-link">
+            <LayoutDashboard size={13} /> Salon Admin Dashboard
+          </Link>
           <Link to="/contact">Business Enquiry</Link>
-          <a href="mailto:hello@amrealprofessional.com">Email</a>
-          <a href="tel:+910000000000">Phone</a>
+          <a href="mailto:hello@amrealprofessional.com">Email Us</a>
         </div>
         <div>
-          <span className="footer-title">Social</span>
+          <span className="footer-title">Connect &amp; Social</span>
           <a href="#" onClick={e => e.preventDefault()}><Instagram size={17} /> Instagram</a>
+          <a href="tel:+910000000000"><Phone size={15} /> +91 00000 00000</a>
         </div>
       </div>
       <div className="footer-bottom">
@@ -1522,18 +1719,69 @@ function useAdminAuth() {
 function AdminLogin({ onLogin }: { onLogin: (pw: string) => boolean }) {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+
+  const handleQuickDemo = (val: string) => {
+    setPw(val);
+    setErr(false);
+    onLogin(val);
+  };
+
   return (
     <div className="admin-login">
       <div className="admin-login-card">
-        <BrandLogo dark />
-        <h1>Admin Panel</h1>
-        <p>Enter your admin password to continue.</p>
+        <div className="admin-login-brand">
+          <BrandLogo dark />
+          <span className="admin-login-badge"><ShieldCheck size={11} /> SALON MANAGEMENT PORTAL</span>
+        </div>
+        <h1>Salon Admin</h1>
+        <p>Access AMREAL product catalog, pricing, and interactive before/after transformation slides.</p>
         <form onSubmit={e => { e.preventDefault(); if (!onLogin(pw)) setErr(true); }}>
-          <input type="password" value={pw} onChange={e => { setPw(e.target.value); setErr(false); }} placeholder="Password (e.g. admin or amreal)" autoFocus />
-          {err && <span className="admin-error"><AlertCircle size={14} /> Incorrect password</span>}
-          <button className="button" type="submit">Sign In <ArrowRight size={15} /></button>
+          <div className="admin-pw-field">
+            <input
+              type={showPw ? "text" : "password"}
+              value={pw}
+              onChange={e => { setPw(e.target.value); setErr(false); }}
+              placeholder="Enter admin password (e.g. admin)"
+              autoFocus
+            />
+            <button
+              type="button"
+              className="admin-pw-toggle"
+              onClick={() => setShowPw(!showPw)}
+              title={showPw ? "Hide password" : "Show password"}
+              aria-label="Toggle password visibility"
+            >
+              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          {err && <span className="admin-error"><AlertCircle size={14} /> Incorrect password. Try default: admin</span>}
+          <button className="button" type="submit">Sign In to Dashboard <ArrowRight size={15} /></button>
         </form>
-        <Link to="/" className="admin-back">← Back to website</Link>
+
+        <div className="admin-login-quick-bar">
+          <span className="admin-quick-label">Instant Demo Access:</span>
+          <div className="admin-quick-chips">
+            <button
+              type="button"
+              className="admin-quick-chip"
+              onClick={() => handleQuickDemo("admin")}
+              title="Click to sign in instantly with demo password 'admin'"
+            >
+              Sign in with <b>admin</b>
+            </button>
+            <button
+              type="button"
+              className="admin-quick-chip"
+              onClick={() => handleQuickDemo("amreal2026")}
+              title="Click to sign in with 'amreal2026'"
+            >
+              Sign in with <b>amreal2026</b>
+            </button>
+          </div>
+        </div>
+
+        <Link to="/" className="admin-back">← Return to AMREAL Website</Link>
       </div>
     </div>
   );
@@ -2102,6 +2350,34 @@ function AdminBeforeAfter() {
     <div className="admin-tab">
       {msg && <div className={`admin-flash ${msg.type}`}>{msg.type === "ok" ? <Check size={15} /> : <AlertCircle size={15} />}{msg.text}</div>}
 
+      {/* Salon Guide: How to Add & Manage Before/After Transformations */}
+      <div className="admin-ba-guide-card">
+        <div className="admin-ba-guide-header">
+          <Sparkles size={20} color="#d94d84" />
+          <div>
+            <h3>Salon Professional Guide: Adding Before & After Images</h3>
+            <p>Showcase real salon transformations to inspire confidence in hair professionals and clients.</p>
+          </div>
+        </div>
+        <div className="admin-ba-guide-steps">
+          <div className="guide-step">
+            <span className="step-num">01</span>
+            <h4>Capture Client Photos</h4>
+            <p>Photograph back & profile under clean, uniform salon lighting. Recommended 4:3 or 1:1 ratio.</p>
+          </div>
+          <div className="guide-step">
+            <span className="step-num">02</span>
+            <h4>Select Timeframe</h4>
+            <p>Upload the initial frizzy/curly state as <b>BEFORE</b>, and either <b>Immediately After</b> or <b>2–4 Months Retention</b> as AFTER.</p>
+          </div>
+          <div className="guide-step">
+            <span className="step-num">03</span>
+            <h4>Interactive Live Preview</h4>
+            <p>Click "Add Slide", select your direct image files, and test the interactive slider right in the form before publishing.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="admin-tab-header">
         <h2>Before / After Slides</h2>
         <button className="button button-small" onClick={() => setEditing({ ...EMPTY_BA })}><Plus size={14} /> Add Slide</button>
@@ -2261,7 +2537,15 @@ function Admin() {
       </aside>
       <div className="admin-content">
         <div className="admin-topbar">
-          <h1>{tab === "products" ? "Product Management" : "Before / After Management"}</h1>
+          <div className="admin-topbar-left">
+            <span className="admin-topbar-eyebrow">AMREAL PROFESSIONAL PORTAL</span>
+            <h1>{tab === "products" ? "Product Management" : "Before / After Management"}</h1>
+          </div>
+          <div className="admin-topbar-actions">
+            <Link to="/" className="button button-small button-secondary" title="Return to public website">
+              <ArrowRight size={13} style={{ transform: "rotate(180deg)" }} /> Return to Website
+            </Link>
+          </div>
         </div>
         {tab === "products" && <AdminProducts />}
         {tab === "beforeafter" && <AdminBeforeAfter />}
@@ -2270,11 +2554,148 @@ function Admin() {
   );
 }
 
+// ─── WhatsApp Corner Floating Widget ──────────────────────────────────────────
+
+function WhatsAppCornerButton() {
+  const [open, setOpen] = useState(false);
+  const phoneNumber = "919830000000"; // AMREAL salon support
+  const message = encodeURIComponent("Hello AMREAL Professional! I would like to inquire about Permanent Hair Spa, salon pricing & treatment protocols.");
+  const waUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+
+  return (
+    <aside className="wa-corner-widget" aria-label="WhatsApp Support">
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="wa-popup-card"
+            initial={{ opacity: 0, scale: 0.9, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 15 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="wa-popup-header">
+              <div className="wa-avatar-wrap">
+                <img src="/assets/amreal-logo.png" alt="AMREAL" className="wa-avatar-img" />
+                <span className="wa-online-dot" />
+              </div>
+              <div className="wa-header-info">
+                <h4>AMREAL Salon Specialist</h4>
+                <p>Online • Instant Assistance</p>
+              </div>
+              <button className="wa-close-btn" onClick={() => setOpen(false)} aria-label="Close Chat">
+                <X size={15} />
+              </button>
+            </div>
+            <div className="wa-popup-body">
+              <div className="wa-bubble">
+                <p>Hello! Welcome to <b>AMREAL Professional</b> ✨</p>
+                <p>Have questions about Permanent Hair Spa, salon orders, or ritual protocols? Chat with our experts directly on WhatsApp!</p>
+              </div>
+            </div>
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="wa-chat-start-btn"
+              onClick={() => setOpen(false)}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.06c-1.49 0-2.95-.4-4.22-1.15l-.3-.18-3.13.82.84-3.05-.2-.31a8.13 8.13 0 0 1-1.25-4.28c0-4.5 3.66-8.16 8.16-8.16 2.18 0 4.23.85 5.77 2.39a8.12 8.12 0 0 1 2.39 5.77c0 4.5-3.66 8.15-8.16 8.15zm4.47-6.1c-.25-.12-1.46-.72-1.68-.8-.23-.08-.39-.12-.56.12-.17.25-.64.8-.79.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.12.17 1.78 2.72 4.31 3.81.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.46-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.29z"/>
+              </svg>
+              <span>Chat on WhatsApp</span>
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <button
+        className="wa-floating-btn"
+        onClick={() => setOpen(!open)}
+        aria-label="Contact on WhatsApp"
+        title="Chat on WhatsApp"
+      >
+        <span className="wa-unread-badge">1</span>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff">
+          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.06c-1.49 0-2.95-.4-4.22-1.15l-.3-.18-3.13.82.84-3.05-.2-.31a8.13 8.13 0 0 1-1.25-4.28c0-4.5 3.66-8.16 8.16-8.16 2.18 0 4.23.85 5.77 2.39a8.12 8.12 0 0 1 2.39 5.77c0 4.5-3.66 8.15-8.16 8.15zm4.47-6.1c-.25-.12-1.46-.72-1.68-.8-.23-.08-.39-.12-.56.12-.17.25-.64.8-.79.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.12.17 1.78 2.72 4.31 3.81.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.46-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.29z"/>
+        </svg>
+      </button>
+    </aside>
+  );
+}
+
+// ─── Luxury Atmosphere Background (White-Pink Gradient, Petals, Flowers, Silky Hair) ─
+
+function LuxuryAtmosphereBackground() {
+  const petals = [
+    { id: 1, left: "4%", size: 30, dur: "18s", delay: "0s", img: "/assets/petal-1.png", swayDur: "4.5s", rot: 25 },
+    { id: 2, left: "13%", size: 22, dur: "22s", delay: "3.5s", img: "/assets/petal-2.png", swayDur: "5.2s", rot: -40 },
+    { id: 3, left: "23%", size: 26, dur: "19s", delay: "7.2s", img: "/assets/petal-3.png", swayDur: "4.8s", rot: 55 },
+    { id: 4, left: "33%", size: 20, dur: "25s", delay: "1.8s", img: "/assets/petal-1.png", swayDur: "6.0s", rot: -20 },
+    { id: 5, left: "44%", size: 28, dur: "20s", delay: "5.4s", img: "/assets/petal-2.png", swayDur: "5.0s", rot: 40 },
+    { id: 6, left: "55%", size: 24, dur: "23s", delay: "9.1s", img: "/assets/petal-3.png", swayDur: "4.2s", rot: -65 },
+    { id: 7, left: "67%", size: 32, dur: "17s", delay: "1.2s", img: "/assets/petal-1.png", swayDur: "5.5s", rot: 30 },
+    { id: 8, left: "77%", size: 20, dur: "26s", delay: "6.8s", img: "/assets/petal-2.png", swayDur: "4.7s", rot: -30 },
+    { id: 9, left: "86%", size: 28, dur: "21s", delay: "10.5s", img: "/assets/petal-3.png", swayDur: "5.8s", rot: 75 },
+    { id: 10, left: "94%", size: 22, dur: "24s", delay: "4.0s", img: "/assets/petal-1.png", swayDur: "5.3s", rot: -45 },
+    { id: 11, left: "18%", size: 24, dur: "27s", delay: "12.5s", img: "/assets/petal-2.png", swayDur: "6.1s", rot: 15 },
+    { id: 12, left: "48%", size: 34, dur: "19s", delay: "14.0s", img: "/assets/petal-3.png", swayDur: "4.6s", rot: -10 },
+    { id: 13, left: "72%", size: 26, dur: "22s", delay: "15.2s", img: "/assets/petal-1.png", swayDur: "5.4s", rot: 60 },
+    { id: 14, left: "91%", size: 19, dur: "25s", delay: "8.5s", img: "/assets/petal-2.png", swayDur: "4.9s", rot: -50 }
+  ];
+
+  return (
+    <div className="luxury-atmosphere-canvas" aria-hidden="true">
+      {/* ── Background Object: Floating Drifting Pink Petals Particle Stream ── */}
+      <div className="bg-petals-stream">
+        {petals.map(p => (
+          <div
+            key={p.id}
+            className="drifting-petal"
+            style={{
+              left: p.left,
+              animationDuration: `${p.dur}, ${p.swayDur}`,
+              animationDelay: `${p.delay}, ${p.delay}`,
+            }}
+          >
+            <img
+              src={p.img}
+              alt=""
+              style={{
+                width: `${p.size}px`,
+                transform: `rotate(${p.rot}deg)`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Floating Salon Admin Quick Access Pill ──────────────────────────────────
+
+function FloatingAdminPill() {
+  const location = useLocation();
+  if (location.pathname.startsWith("/admin")) return null;
+  return (
+    <aside className="floating-admin-wrap" aria-label="Salon Management Quick Access">
+      <Link to="/admin" className="floating-admin-pill" title="AMREAL Salon Admin Portal">
+        <span className="floating-admin-icon">
+          <LayoutDashboard size={14} />
+        </span>
+        <span className="floating-admin-text">Salon Admin</span>
+        <span className="floating-admin-badge">PORTAL</span>
+      </Link>
+    </aside>
+  );
+}
+
 // ─── App Root ─────────────────────────────────────────────────────────────────
 
 export default function App() {
   return (
     <>
+      <LuxuryAtmosphereBackground />
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -2286,6 +2707,8 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <WhatsAppCornerButton />
+      <FloatingAdminPill />
     </>
   );
 }

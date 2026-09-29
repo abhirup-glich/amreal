@@ -89,10 +89,10 @@ export function CuticleDiagram({ className = "" }: { className?: string }) {
 export function ClinicalMetricsGram() {
   const metrics = [
     {
-      value: "3–5",
+      value: "3–4",
       unit: "MONTHS",
       label: "Longevity Retention",
-      desc: "One ritual durability",
+      desc: "Blow-dried looks & retention",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gram-icon">
           <circle cx="12" cy="12" r="10" />
@@ -124,14 +124,18 @@ export function ClinicalMetricsGram() {
       )
     },
     {
-      value: "1000g",
-      unit: "NET FORMAT",
-      label: "Salon Backbar",
-      desc: "High-yield professional jar",
+      value: "BLOW-DRY",
+      unit: "EFFORTLESS",
+      label: "Effortless Blow-Dry",
+      desc: "Less frizz. Better manageability. Faster styling.",
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="gram-icon">
-          <path d="M6 3h12v3H6zM7 6v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6" />
-          <line x1="10" y1="12" x2="14" y2="12" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="gram-icon" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 5h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+          <path d="M3 7h1" />
+          <path d="M3 11h1" />
+          <path d="M13 13v6a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-6" />
+          <path d="M17 9h4" />
+          <path d="M19 7l2 2-2 2" />
         </svg>
       )
     }
