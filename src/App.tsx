@@ -480,7 +480,8 @@ function Hero() {
                 <img
                   src={slide.image}
                   alt={slide.title}
-                  className={cx("hero-seamless-img", index === 0 ? "img-cover" : "img-contain")}
+                  className="hero-seamless-img"
+                  style={{ objectPosition: index === 0 ? "center center" : "center top" }}
                 />
                 {/* Soft left edge dissolve feather */}
                 <div className="hero-left-fade-feather" aria-hidden="true" />

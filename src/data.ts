@@ -537,15 +537,5 @@ export const heroSlides = [
     link: "/products",
     category: "Purifying",
     highlights: ["Residue Removal", "Scalp Balanced", "Deep Cleansing"]
-  },
-  {
-    eyebrow: "INTENSIVE FIBRE RESTORATION",
-    title: "COLLAGEN PLEX BIOTIN MASQUE — NO.4.",
-    text: "Big and Small formats (500 ml & 250 ml). Replenishes dry, chemically stressed hair for ultimate bond strength and touchable softness.",
-    image: "/assets/collagen-biotin-masque.jpeg",
-    badge: "Big 500ml & Small 250ml",
-    link: "/products/collagen-plex-biotin-masque-500",
-    category: "Restoration",
-    highlights: ["Collagen Plex Rebuild", "Biotin Fortified", "Chemically Stressed Hair"]
   }
 ];
